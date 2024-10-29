@@ -40,7 +40,7 @@ export default function App() {
       angle:"0",
       img: "https://example.com/image.png",
       workflow: "exampleWorkflow",
-      workflow_params: {},
+      workflow_params: "{}",
     });
     console.log('job created');
   }
