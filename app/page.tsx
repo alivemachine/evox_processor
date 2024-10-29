@@ -17,7 +17,7 @@ export default function App() {
 
   function listJobs() {
     client.models.Job.observeQuery().subscribe({
-      next: (data) => setJobs([...data.jobs]),
+      next: (data) => setJobs([...data.items]),
     });
   }
 
