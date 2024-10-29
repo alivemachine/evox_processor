@@ -30,9 +30,9 @@ export default function App() {
       id: window.prompt("Item ID"),
       color: {
         angle: {
-          img: window.prompt("Image URL"),
-          workflow: window.prompt("Workflow"),
-          workflow_params: JSON.parse(window.prompt("Workflow Params (JSON)")),
+          img: "https://example.com/image.png",
+          workflow: "exampleWorkflow",
+          workflow_params: {},
         },
       },
     });
@@ -40,28 +40,13 @@ export default function App() {
 
   return (
     <main>
-      <h1>My Items</h1>
+      <h1>My items</h1>
       <button onClick={createItem}>+ new</button>
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Image</th>
-            <th>Workflow</th>
-            <th>Workflow Params</th>
-          </tr>
-        </thead>
-        <tbody>
-          {items.map((item) => (
-            <tr key={item.id}>
-              <td>{item.id}</td>
-              <td>{item.color.angle.img}</td>
-              <td>{item.color.angle.workflow}</td>
-              <td>{JSON.stringify(item.color.angle.workflow_params)}</td>
-            </tr>
-          ))}
-        </tbody>
-      </table>
+      <ul>
+        {items.map((item) => (
+          <li key={item.id}>{item.id}</li>
+        ))}
+      </ul>
       <div>
         🥳 App successfully hosted. Try creating a new item.
         <br />
