@@ -48,7 +48,14 @@ export default function App() {
       <button onClick={createJob}>+ new</button>
       <ul>
         {jobs.map((job) => (
-          <li key={job.vifid}>{job.vifid}{job.color}{job.angle}{job.img}{job.workflow}{job.workflow_params}</li>
+          <li key={job.vifid}>
+            {String(job.vifid)}
+            {String(job.color)}
+            {String(job.angle)}
+            {String(job.img)}
+            {String(job.workflow)}
+            {String(job.workflow_params)}
+          </li>
         ))}
       </ul>
     </main>
