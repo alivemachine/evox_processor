@@ -10,7 +10,9 @@ const schema = a.schema({
     .model({
       vifid: a.string().required(),
       color: a.customType({
+        name: a.string(),
         angle: a.customType({
+          name: a.string(),
           img: a.url(),
           workflow: a.string(),
           workflow_params: a.json(),

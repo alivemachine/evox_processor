@@ -29,7 +29,9 @@ export default function App() {
     client.models.Job.create({
       vifid: window.prompt("VIF #"),
       color: {
+        name: "silver grey",
         angle: {
+          name: "0",
           img: "https://example.com/image.png",
           workflow: "exampleWorkflow",
           workflow_params: {},
