@@ -36,15 +36,11 @@ export default function App() {
     console.log('job going to create');
     client.models.Job.create({
       vifid: vifid,
-      color: {
-        name: "silver grey",
-        angle: {
-          name: "0",
-          img: "https://example.com/image.png",
-          workflow: "exampleWorkflow",
-          workflow_params: {},
-        },
-      },
+      color: "silver grey",
+      angle:"0",
+      img: "https://example.com/image.png",
+      workflow: "exampleWorkflow",
+      workflow_params: {},
     });
     console.log('job created');
   }

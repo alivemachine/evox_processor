@@ -9,15 +9,11 @@ const schema = a.schema({
   Job: a
     .model({
       vifid: a.string().required(),
-      color: a.customType({
-        name: a.string(),
-        angle: a.customType({
-          name: a.string(),
-          img: a.url(),
-          workflow: a.string(),
-          workflow_params: a.json(),
-        })
-      })
+      color: a.string(),
+      angle: a.string(),
+      img: a.url(),
+      workflow: a.string(),
+      workflow_params: a.json(),
     })
     .authorization((allow) => [allow.publicApiKey()]),
 });
