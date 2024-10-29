@@ -25,39 +25,56 @@ export default function App() {
     listJobs();
   }, []);
 
-  function createJob() {
-    const vifid = window.prompt("VIF #");
+  function createJob(vifid: string | null = null, color: string | null = null) {
     if (vifid === null) {
-      
-      return;
+      vifid = window.prompt("VIF #");
     }
+    if (vifid === null) { return; }
+  
+    if (color === null) {
+      color = window.prompt("Color");
+    }
+    if (color === null) { return; }
+  
     client.models.Job.create({
-      id: vifid+"_silvergrey_spin-0",
+      id: vifid + "_" + color.replace(/[^a-zA-Z0-9]/g, '') + "_spin-0",
       vifid: vifid,
-      color: "silver grey",
-      angle:"spin-0",
-      img: "https://example.com/image.png",
-      workflow: "exampleWorkflow",
-      workflow_params: "{}",
+      color: color
     });
   }
 
   return (
-    <main>
-      <h1>Jobs</h1>
-      <button onClick={createJob}>+ new</button>
-      <ul>
-        {jobs.map((job) => (
-          <li key={job.vifid}>
-            {String(job.vifid)}
-            {String(job.color)}
-            {String(job.angle)}
-            {String(job.img)}
-            {String(job.workflow)}
-            {String(job.workflow_params)}
-          </li>
-        ))}
-      </ul>
-    </main>
+<main>
+  <h1>Jobs</h1>
+  <button onClick={createJob}>+ new</button>
+  <table>
+    <thead>
+      <tr>
+        <th>VIFID</th>
+        <th>Color</th>
+        <th>Angle</th>
+        <th>Image</th>
+        <th>Workflow</th>
+        <th>Workflow Params</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      {jobs.map((job) => (
+        <tr key={job.vifid}>
+          <td>{String(job.vifid)}</td>
+          <td>{String(job.color)}</td>
+          <td>{String(job.angle)}</td>
+          <td>{String(job.img)}</td>
+          <td>{String(job.workflow)}</td>
+          <td>{String(job.workflow_params)}</td>
+          <td>
+            <button onClick={() => createJob(job.vifid)}>New color</button>
+          </td>
+        </tr>
+      ))}
+    </tbody>
+  </table>
+</main>
   );
 }
