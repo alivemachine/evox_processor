@@ -10,7 +10,11 @@ const schema = a.schema({
     .model({
       id: a.string().required(),
       color: a.customType({
-        angle: a.customType({})
+        angle: a.customType({
+          img: a.url(),
+          workflow: a.string(),
+          workflow_params: a.json(),
+        })
       })
     })
     .authorization((allow) => [allow.publicApiKey()]),
