@@ -8,9 +8,9 @@ can "create", "read", "update", and "delete" any records.
 const schema = a.schema({
   Item: a
     .model({
-      id: a.string(),
-      color: a.map(a.model({
-        angle: a.map(a.model({}))
+      id: a.string().required(),
+      color: a.map(a.customType({
+        angle: a.map(a.customType({}))
       }))
     })
     .authorization((allow) => [allow.publicApiKey()]),
