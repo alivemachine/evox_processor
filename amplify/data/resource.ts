@@ -1,4 +1,4 @@
-import { type ClientSchema, a, defineData } from "@aws-amplify/backend";
+import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 
 /*== STEP 1 ===============================================================
 The section below creates a database with the structure {"id#":{"color":{"angle":{}}}}.
@@ -9,9 +9,9 @@ const schema = a.schema({
   Item: a
     .model({
       id: a.string().required(),
-      color: a.map(a.customType({
-        angle: a.map(a.customType({}))
-      }))
+      color: a.customType({
+        angle: a.customType({})
+      })
     })
     .authorization((allow) => [allow.publicApiKey()]),
 });
@@ -27,6 +27,7 @@ export const data = defineData({
     },
   },
 });
+
 
 /*== STEP 2 ===============================================================
 Go to your frontend source code. From your client-side code, generate a
