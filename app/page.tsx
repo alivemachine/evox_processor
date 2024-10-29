@@ -27,22 +27,19 @@ export default function App() {
 
   function createJob() {
     const vifid = window.prompt("VIF #");
-    console.log(vifid);
     if (vifid === null) {
       
       return;
     }
-    console.log(vifid);
-    console.log('job going to create');
     client.models.Job.create({
+      id: vifid+"_silvergrey_spin-0",
       vifid: vifid,
       color: "silver grey",
-      angle:"0",
+      angle:"spin-0",
       img: "https://example.com/image.png",
       workflow: "exampleWorkflow",
       workflow_params: "{}",
     });
-    console.log('job created');
   }
 
   return (
@@ -51,7 +48,7 @@ export default function App() {
       <button onClick={createJob}>+ new</button>
       <ul>
         {jobs.map((job) => (
-          <li key={job.vifid}>{job.vifid}</li>
+          <li key={job.vifid}>{job.vifid}{job.color}{job.angle}{job.img}{job.workflow}{job.workflow_params}</li>
         ))}
       </ul>
     </main>
