@@ -26,10 +26,10 @@ export default function App() {
   }, []);
 
   function createItem() {
-    const id = window.prompt("Item ID");
-    if (id !== null) {
+    const vifid = window.prompt("VIF #");
+    if (vifid !== null) {
       client.models.Item.create({
-        id: id,
+        vifid: vifid,
         color: {
           angle: {
             img: "https://example.com/image.png",
@@ -47,7 +47,7 @@ export default function App() {
       <button onClick={createItem}>+ new</button>
       <ul>
         {items.map((item) => (
-          <li key={item.id}>{item.id}</li>
+          <li key={item.vifid}>{item.vifid}</li>
         ))}
       </ul>
       <div>

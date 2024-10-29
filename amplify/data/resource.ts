@@ -8,7 +8,7 @@ can "create", "read", "update", and "delete" any records.
 const schema = a.schema({
   Item: a
     .model({
-      id: a.string().required(),
+      vifid: a.string().required(),
       color: a.customType({
         angle: a.customType({
           img: a.url(),
