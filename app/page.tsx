@@ -13,35 +13,57 @@ Amplify.configure(outputs);
 const client = generateClient<Schema>();
 
 export default function App() {
-  const [todos, setTodos] = useState<Array<Schema["Todo"]["type"]>>([]);
+  const [items, setItems] = useState<Array<Schema["Item"]["type"]>>([]);
 
-  function listTodos() {
-    client.models.Todo.observeQuery().subscribe({
-      next: (data) => setTodos([...data.items]),
+  function listItems() {
+    client.models.Item.observeQuery().subscribe({
+      next: (data) => setItems([...data.items]),
     });
   }
 
   useEffect(() => {
-    listTodos();
+    listItems();
   }, []);
 
-  function createTodo() {
-    client.models.Todo.create({
-      content: window.prompt("Todo content"),
+  function createItem() {
+    client.models.Item.create({
+      id: window.prompt("Item ID"),
+      color: {
+        angle: {
+          img: window.prompt("Image URL"),
+          workflow: window.prompt("Workflow"),
+          workflow_params: JSON.parse(window.prompt("Workflow Params (JSON)")),
+        },
+      },
     });
   }
 
   return (
     <main>
-      <h1>My todos</h1>
-      <button onClick={createTodo}>+ new</button>
-      <ul>
-        {todos.map((todo) => (
-          <li key={todo.id}>{todo.content}</li>
-        ))}
-      </ul>
+      <h1>My Items</h1>
+      <button onClick={createItem}>+ new</button>
+      <table>
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Image</th>
+            <th>Workflow</th>
+            <th>Workflow Params</th>
+          </tr>
+        </thead>
+        <tbody>
+          {items.map((item) => (
+            <tr key={item.id}>
+              <td>{item.id}</td>
+              <td>{item.color.angle.img}</td>
+              <td>{item.color.angle.workflow}</td>
+              <td>{JSON.stringify(item.color.angle.workflow_params)}</td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
       <div>
-        🥳 App successfully hosted. Try creating a new todo.
+        🥳 App successfully hosted. Try creating a new item.
         <br />
         <a href="https://docs.amplify.aws/nextjs/start/quickstart/nextjs-app-router-client-components/">
           Review next steps of this tutorial.
