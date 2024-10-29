@@ -26,8 +26,16 @@ export default function App() {
   }, []);
 
   function createJob() {
+    const vifid = window.prompt("VIF #");
+    console.log(vifid);
+    if (vifid === null) {
+      
+      return;
+    }
+    console.log(vifid);
+    console.log('job going to create');
     client.models.Job.create({
-      vifid: window.prompt("VIF #"),
+      vifid: vifid,
       color: {
         name: "silver grey",
         angle: {
@@ -38,6 +46,7 @@ export default function App() {
         },
       },
     });
+    console.log('job created');
   }
 
   return (
