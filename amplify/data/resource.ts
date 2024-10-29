@@ -6,7 +6,7 @@ The authorization rule below specifies that any user authenticated via an API ke
 can "create", "read", "update", and "delete" any records.
 =========================================================================*/
 const schema = a.schema({
-  Item: a
+  Job: a
     .model({
       vifid: a.string().required(),
       color: a.customType({

@@ -13,22 +13,22 @@ Amplify.configure(outputs);
 const client = generateClient<Schema>();
 
 export default function App() {
-  const [items, setItems] = useState<Array<Schema["Item"]["type"]>>([]);
+  const [jobs, setJobs] = useState<Array<Schema["Job"]["type"]>>([]);
 
-  function listItems() {
-    client.models.Item.observeQuery().subscribe({
-      next: (data) => setItems([...data.items]),
+  function listJobs() {
+    client.models.Job.observeQuery().subscribe({
+      next: (data) => setJobs([...data.jobs]),
     });
   }
 
   useEffect(() => {
-    listItems();
+    listJobs();
   }, []);
 
-  function createItem() {
+  function createJob() {
     const vifid = window.prompt("VIF #");
     if (vifid !== null) {
-      client.models.Item.create({
+      client.models.Job.create({
         vifid: vifid,
         color: {
           angle: {
@@ -43,20 +43,13 @@ export default function App() {
 
   return (
     <main>
-      <h1>My items</h1>
-      <button onClick={createItem}>+ new</button>
+      <h1>Jobs</h1>
+      <button onClick={createJob}>+ new</button>
       <ul>
-        {items.map((item) => (
-          <li key={item.vifid}>{item.vifid}</li>
+        {jobs.map((job) => (
+          <li key={job.vifid}>{job.vifid}</li>
         ))}
       </ul>
-      <div>
-        🥳 App successfully hosted. Try creating a new item.
-        <br />
-        <a href="https://docs.amplify.aws/nextjs/start/quickstart/nextjs-app-router-client-components/">
-          Review next steps of this tutorial.
-        </a>
-      </div>
     </main>
   );
 }
