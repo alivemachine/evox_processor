@@ -26,16 +26,19 @@ export default function App() {
   }, []);
 
   function createItem() {
-    client.models.Item.create({
-      id: window.prompt("Item ID"),
-      color: {
-        angle: {
-          img: "https://example.com/image.png",
-          workflow: "exampleWorkflow",
-          workflow_params: {},
+    const id = window.prompt("Item ID");
+    if (id !== null) {
+      client.models.Item.create({
+        id: id,
+        color: {
+          angle: {
+            img: "https://example.com/image.png",
+            workflow: "exampleWorkflow",
+            workflow_params: {},
+          },
         },
-      },
-    });
+      });
+    }
   }
 
   return (
