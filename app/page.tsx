@@ -26,19 +26,16 @@ export default function App() {
   }, []);
 
   function createJob() {
-    const vifid = window.prompt("VIF #");
-    if (vifid !== null) {
-      client.models.Job.create({
-        vifid: vifid,
-        color: {
-          angle: {
-            img: "https://example.com/image.png",
-            workflow: "exampleWorkflow",
-            workflow_params: {},
-          },
+    client.models.Job.create({
+      vifid: window.prompt("VIF #"),
+      color: {
+        angle: {
+          img: "https://example.com/image.png",
+          workflow: "exampleWorkflow",
+          workflow_params: {},
         },
-      });
-    }
+      },
+    });
   }
 
   return (
