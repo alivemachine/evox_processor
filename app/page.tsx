@@ -26,8 +26,12 @@ export default function App() {
   }, []);
 
   function createJob(vifid: string | null = null, color: string | null = null) {
+    let body;
+    let trim;
     if (vifid === null) {
       vifid = window.prompt("VIF #");
+      body = window.prompt("Body");
+      trim = window.prompt("Trim");
     }
     if (vifid === null) { return; }
   
@@ -39,6 +43,8 @@ export default function App() {
     client.models.Job.create({
       id: vifid + "_" + color.replace(/[^a-zA-Z0-9]/g, '') + "_spin0",
       vifid: vifid,
+      body: body,
+      trim: trim,
       color: color,
       angle: "spin0"
     });
@@ -49,7 +55,7 @@ export default function App() {
   return (
 <main>
   <h1>Jobs</h1>
-  <button onClick={() => createJob()}>+ new</button>
+    <button onClick={() => createJob()}>+ new</button>
   <table>
     <thead>
       <tr>
@@ -66,25 +72,37 @@ export default function App() {
       </tr>
     </thead>
     <tbody>
-      {jobs.map((job) => (
-        <tr key={job.vifid}>
-          <td>{String(job.vifid)}</td>
-          <td><button>Upload</button></td>
-          <td>{String(job.body)}</td>
-          <td>{String(job.trim)}</td>
-          <td>{String(job.color)}</td>
-          <td>{String(job.angle)}</td>
-          <td>{String(job.img)}</td>
-          <td>{String(job.workflow)}</td>
-          <td>{String(job.workflow_params)}</td>
-          <td>
-            <button onClick={() => createJob(job.vifid)}>New color</button>
-            <button onClick={() => createJob(job.vifid,job.color)}>New angle</button>
-            <button onClick={() => removeJob(job.id)}>X</button>
-            <button>RUN</button>
-          </td>
-        </tr>
-      ))}
+      {jobs
+        .sort((a, b) => (a.vifid > b.vifid ? 1 : -1))
+        .reduce((acc, job, index, array) => {
+          if (index === 0 || job.vifid !== array[index - 1].vifid) {
+            acc.push({ ...job, rowSpan: array.filter(j => j.vifid === job.vifid).length });
+          } else {
+            acc.push({ ...job, rowSpan: 0 });
+          }
+          return acc;
+        }, [])
+        .map((job, index) => (
+          <tr key={index}>
+            {job.rowSpan > 0 && (
+              <td rowSpan={job.rowSpan}>{String(job.vifid)}</td>
+            )}
+            <td><button>Upload</button></td>
+            <td>{String(job.body)}</td>
+            <td>{String(job.trim)}</td>
+            <td>{String(job.color)}</td>
+            <td>{String(job.angle)}</td>
+            <td>{String(job.img)}</td>
+            <td>{String(job.workflow)}</td>
+            <td>{String(job.workflow_params)}</td>
+            <td>
+              <button onClick={() => createJob(job.vifid)}>New color</button>
+              <button onClick={() => createJob(job.vifid, job.color)}>New angle</button>
+              <button onClick={() => removeJob(job.id)}>X</button>
+              <button>RUN</button>
+            </td>
+          </tr>
+        ))}
     </tbody>
   </table>
 </main>
