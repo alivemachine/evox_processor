@@ -134,7 +134,9 @@ export default function App() {
             <td>{String(job.trim)}</td>
             <td>{String(job.color)}</td>
             <td>{String(job.angle)}</td>
-            <td>{String(job.img)}</td>
+            <td>
+            {job.img ? <StorageImage alt={job.img} path={job.img} /> : null}
+            </td>
             <td>
               <View width="4rem">
                 <Menu>
