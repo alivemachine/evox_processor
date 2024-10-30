@@ -78,6 +78,21 @@ export default function App() {
   function removeJob(id: string) {
     client.models.Job.delete({ id: id });
   }
+  async function updateJob(vifid: string, color: string,angle: string,property: string, value: any) {
+    const id = vifid + "_"+color.replace(/[^a-zA-Z0-9]/g, '')+"_"+angle;
+    const job = {
+        id: id,
+        [property]: value
+    };
+
+    const { data: updatedJob, errors } = await client.models.Job.update(job);
+
+    if (errors) {
+        console.error('Failed to update job:', errors);
+    } else {
+        console.log('Job updated successfully:', updatedJob);
+    }
+}
   return (
 <main>
   <h1>Jobs</h1>
@@ -124,7 +139,7 @@ export default function App() {
               <View width="4rem">
                 <Menu>
                   {generatedData[job.vifid]?.map((item, idx) => (
-                    <MenuItem key={idx}>{item.path}</MenuItem>
+                    <MenuItem onClick={() => {updateJob(job.vifid,'img',item.path);}} key={idx}>{item.path}</MenuItem>
                   ))}
                 </Menu>
               </View>
