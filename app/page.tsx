@@ -20,22 +20,24 @@ export default function App() {
   const [jobs, setJobs] = useState<Array<Schema["Job"]["type"]>>([]);
 
   
-  async function listJobs() {
+   async function listJobs() {
     const subscription = client.models.Job.observeQuery().subscribe({
       next: async (data) => {
         const jobsWithGeneratedPaths = await Promise.all(
           data.items.map(async (job) => {
             const generatedPaths = await fetchGeneratedPaths(job.vifid);
-            return { ...job, generated: generatedPaths };
+            return { ...job, generated: generatedPaths || [] };
           })
         );
         setJobs(jobsWithGeneratedPaths);
       },
     });
+  
     async function fetchGeneratedPaths(vifid: string) {
       const result = await list({ path: `vehicles/${vifid}/generated/` });
       return result.items.map(item => item.path);
     }
+  
     return () => subscription.unsubscribe();
   }
   useEffect(() => {
