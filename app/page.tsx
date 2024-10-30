@@ -15,62 +15,55 @@ import "@aws-amplify/ui-react/styles.css";
 Amplify.configure(outputs);
 
 const client = generateClient<Schema>();
+const generatedData: Record<string, string[]> = {};
 
 export default function App() {
   const [jobs, setJobs] = useState<Array<Schema["Job"]["type"]>>([]);
 
   
-   async function listJobs() {
-    const subscription = client.models.Job.observeQuery().subscribe({
+  function listJobs() {
+    client.models.Job.observeQuery().subscribe({
       next: async (data) => {
-        const jobsWithGeneratedPaths = await Promise.all(
-          data.items.map(async (job) => {
-            const generatedPaths = await fetchGeneratedPaths(job.vifid);
-            return { ...job, generated: generatedPaths || [] };
-          })
-        );
-        setJobs(jobsWithGeneratedPaths);
+        const jobsData = data.items;
+        setJobs([...jobsData]);
+
+        for (const job of jobsData) {
+          const vifid = job.vifid;
+          const s3Path = `vehicles/${vifid}/generated/`;
+          try {
+            const result = await Storage.list(s3Path);
+            generatedData[vifid] = result.map(item => item.key);
+          } catch (error) {
+            console.error(`Error fetching generated images for vifid ${vifid}:`, error);
+          }
+        }
       },
     });
-  
-    async function fetchGeneratedPaths(vifid: string) {
-      const result = await list({ path: `vehicles/${vifid}/generated/` });
-      return result.items.map(item => item.path);
-    }
-  
-    return () => subscription.unsubscribe();
   }
   useEffect(() => {
     listJobs();
   }, []);
 
-    function createJob(vifid: string | null = null, color: string | null = null) {
+  function createJob(vifid: string | null = null, color: string | null = null) {
     let body: string | null = null;
     let trim: string | null = null;
-  
     if (vifid === null) {
       vifid = window.prompt("VIF #", "00000");
       body = window.prompt("Body", "Toyota");
-      trim = window.prompt("Trim", "Rav4 SUV");
+      trim = window.prompt("Trim","Rav4 SUV");
     }
-  
-    if (vifid === null || body === null || trim === null) {
-      return;
-    }
+    if (vifid === null||body === null||trim === null) { return; }
   
     if (color === null) {
       color = window.prompt("Color", "silver grey");
     }
-  
-    if (color === null) {
-      return;
-    }
+    if (color === null) { return; }
   
     client.models.Job.create({
       id: vifid + "_" + color.replace(/[^a-zA-Z0-9]/g, '') + "_spin0",
       vifid: vifid,
-      body: body || "Unknown Body",
-      trim: trim || "Unknown Trim",
+      body: body,
+      trim: trim,
       color: color,
       angle: "spin0"
     });
@@ -98,7 +91,7 @@ export default function App() {
         <th>Actions</th>
       </tr>
     </thead>
-        <tbody>
+    <tbody>
       {jobs
         .sort((a, b) => (a.vifid > b.vifid ? 1 : -1))
         .reduce((acc: Array<Schema["Job"]["type"] & { rowSpan: number }>, job, index, array) => {
@@ -121,15 +114,11 @@ export default function App() {
             <td>{String(job.angle)}</td>
             <td>{String(job.img)}</td>
             <td>
-            <View width="4rem">
+              <View width="4rem">
                 <Menu>
-                  {job.generated?.length ? (
-                    job.generated.map((path, idx) => (
-                      <MenuItem key={idx}>{path}</MenuItem>
-                    ))
-                  ) : (
-                    <MenuItem>No generated files</MenuItem>
-                  )}
+                  {generatedData.map((path, idx) => (
+                    <MenuItem key={idx}>{path}</MenuItem>
+                  ))}
                 </Menu>
               </View>
             </td>
