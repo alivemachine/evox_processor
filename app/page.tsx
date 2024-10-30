@@ -39,10 +39,13 @@ export default function App() {
     client.models.Job.create({
       id: vifid + "_" + color.replace(/[^a-zA-Z0-9]/g, '') + "_spin0",
       vifid: vifid,
-      color: color
+      color: color,
+      angle: "spin0"
     });
   }
-
+  function removeJob(id: string) {
+    client.models.Job.delete({ id: id });
+  }
   return (
 <main>
   <h1>Jobs</h1>
@@ -70,6 +73,8 @@ export default function App() {
           <td>{String(job.workflow_params)}</td>
           <td>
             <button onClick={() => createJob(job.vifid)}>New color</button>
+            <button onClick={() => removeJob(job.id)}>X</button>
+            <button>RUN</button>
           </td>
         </tr>
       ))}
