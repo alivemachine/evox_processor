@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { generateClient } from "aws-amplify/data";
+import { StorageImage } from '@aws-amplify/ui-react-storage';
 import type { Schema } from "@/amplify/data/resource";
 import "./../app/app.css";
 import { Amplify } from "aws-amplify";
@@ -20,7 +21,6 @@ export default function App() {
       next: (data) => setJobs([...data.items]),
     });
   }
-
   useEffect(() => {
     listJobs();
   }, []);
@@ -33,7 +33,7 @@ export default function App() {
       body = window.prompt("Body");
       trim = window.prompt("Trim");
     }
-    if (vifid === null) { return; }
+    if (vifid === null||body === null||trim === null) { return; }
   
     if (color === null) {
       color = window.prompt("Color");
