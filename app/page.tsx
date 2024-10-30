@@ -31,7 +31,7 @@ export default function App() {
           const vifid = job.vifid;
           const s3Path = `vehicles/${vifid}/generated/`;
           try {
-            const result = await Storage.list(s3Path);
+            const result = await list(s3Path);
             generatedData[vifid] = result.map(item => item.key);
           } catch (error) {
             console.error(`Error fetching generated images for vifid ${vifid}:`, error);
