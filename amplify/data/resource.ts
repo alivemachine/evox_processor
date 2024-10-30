@@ -9,8 +9,8 @@ const schema = a.schema({
   Job: a
     .model({
       vifid: a.string().required(),
-      body: a.string().required(),
-      trim: a.string().required(),
+      body: a.string(),
+      trim: a.string(),
       color: a.string(),
       angle: a.enum(["spin0", "spin20", "spin40", "spin60", "spin80", "spin100", "spin120", "spin140", "spin160", "spin180", "spin200", "spin220", "spin240", "spin260", "spin280", "spin300", "spin320", "spin340"]),
       status: a.enum(["idle", "waiting","uploading", "preparing", "training","ready"]),
