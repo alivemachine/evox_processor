@@ -3,6 +3,9 @@
 import { useState, useEffect } from "react";
 import { generateClient } from "aws-amplify/data";
 import { StorageImage } from '@aws-amplify/ui-react-storage';
+import { Menu, MenuItem, View } from '@aws-amplify/ui-react';
+
+import { list } from 'aws-amplify/storage';
 import type { Schema } from "@/amplify/data/resource";
 import "./../app/app.css";
 import { Amplify } from "aws-amplify";
@@ -16,9 +19,18 @@ const client = generateClient<Schema>();
 export default function App() {
   const [jobs, setJobs] = useState<Array<Schema["Job"]["type"]>>([]);
 
-  function listJobs() {
-    client.models.Job.observeQuery().subscribe({
-      next: (data) => setJobs([...data.items]),
+  async function listJobs() {
+    const jobData = await client.models.Job.observeQuery().subscribe({
+      next: async (data) => {
+        const jobsWithImages = await Promise.all(data.items.map(async (job) => {
+          const imagePaths = await list(`vehicles/${job.vifid}/generated`);
+          return {
+            ...job,
+            generated: imagePaths.map(image => image.key)
+          };
+        }));
+        setJobs(jobsWithImages);
+      },
     });
   }
   useEffect(() => {
@@ -29,14 +41,14 @@ export default function App() {
     let body;
     let trim;
     if (vifid === null) {
-      vifid = window.prompt("VIF #");
-      body = window.prompt("Body");
-      trim = window.prompt("Trim");
+      vifid = window.prompt("VIF #", "00000");
+      body = window.prompt("Body", "Toyota");
+      trim = window.prompt("Trim","Rav4 SUV");
     }
     if (vifid === null||body === null||trim === null) { return; }
   
     if (color === null) {
-      color = window.prompt("Color");
+      color = window.prompt("Color", "silver grey");
     }
     if (color === null) { return; }
   
@@ -66,6 +78,7 @@ export default function App() {
         <th>Color</th>
         <th>Angle</th>
         <th>Image</th>
+        <th>Generated</th>
         <th>Workflow</th>
         <th>Workflow Params</th>
         <th>Actions</th>
@@ -93,6 +106,15 @@ export default function App() {
             <td>{String(job.color)}</td>
             <td>{String(job.angle)}</td>
             <td>{String(job.img)}</td>
+            <td>
+              <View width="4rem">
+                <Menu>
+                  {job.generated.map((path, idx) => (
+                    <MenuItem key={idx}>{path}</MenuItem>
+                  ))}
+                </Menu>
+              </View>
+            </td>
             <td>{String(job.workflow)}</td>
             <td>{String(job.workflow_params)}</td>
             <td>
