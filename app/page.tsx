@@ -96,10 +96,10 @@ export default function App() {
         <th>Actions</th>
       </tr>
     </thead>
-    <tbody>
+        <tbody>
       {jobs
         .sort((a, b) => (a.vifid > b.vifid ? 1 : -1))
-        .reduce((acc, job, index, array) => {
+        .reduce((acc: Array<Schema["Job"]["type"] & { rowSpan: number }>, job, index, array) => {
           if (index === 0 || job.vifid !== array[index - 1].vifid) {
             acc.push({ ...job, rowSpan: array.filter(j => j.vifid === job.vifid).length });
           } else {
