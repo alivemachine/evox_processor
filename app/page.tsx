@@ -53,7 +53,8 @@ export default function App() {
   <table>
     <thead>
       <tr>
-        <th>VIFID</th>
+        <th>VIF #</th>
+        <th>Dataset</th>
         <th>Color</th>
         <th>Angle</th>
         <th>Image</th>
@@ -66,6 +67,7 @@ export default function App() {
       {jobs.map((job) => (
         <tr key={job.vifid}>
           <td>{String(job.vifid)}</td>
+          <td><button>Upload</button></td>
           <td>{String(job.color)}</td>
           <td>{String(job.angle)}</td>
           <td>{String(job.img)}</td>
@@ -73,6 +75,7 @@ export default function App() {
           <td>{String(job.workflow_params)}</td>
           <td>
             <button onClick={() => createJob(job.vifid)}>New color</button>
+            <button onClick={() => createJob(job.vifid,job.color)}>New angle</button>
             <button onClick={() => removeJob(job.id)}>X</button>
             <button>RUN</button>
           </td>

@@ -11,7 +11,7 @@ const schema = a.schema({
       vifid: a.string().required(),
       color: a.string(),
       angle: a.enum(["spin0", "spin20", "spin40", "spin60", "spin80", "spin100", "spin120", "spin140", "spin160", "spin180", "spin200", "spin220", "spin240", "spin260", "spin280", "spin300", "spin320", "spin340"]),
-      status: a.enum(["idle", "uploading", "preparing", "training","ready"]),
+      status: a.enum(["idle", "waiting","uploading", "preparing", "training","ready"]),
       img: a.url(),
       workflow: a.string(),
       workflow_params: a.json(),
