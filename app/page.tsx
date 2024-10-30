@@ -139,7 +139,11 @@ export default function App() {
               <View width="4rem">
                 <Menu>
                   {generatedData[job.vifid]?.map((item, idx) => (
-                    <MenuItem onClick={() => {updateJob(job.vifid,'img',item.path);}} key={idx}>{item.path}</MenuItem>
+                    <MenuItem onClick={() => {
+                      if (job.vifid && job.color && job.angle) {
+                        updateJob(job.vifid, job.color, job.angle, 'img', item.path);
+                      }
+                    }} key={idx}>{item.path}</MenuItem>
                   ))}
                 </Menu>
               </View>
