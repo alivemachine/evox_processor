@@ -20,24 +20,11 @@ export default function App() {
   const [jobs, setJobs] = useState<Array<Schema["Job"]["type"]>>([]);
 
   
-async function listJobs() {
-  const jobData = await client.models.Job.observeQuery().subscribe({
-      next: async (data) => {
-          const jobsWithImages = await Promise.all(data.items.map(async (job) => {
-              const listInput: ListAllInput = {
-                  // Populate with necessary properties
-                  path: `vehicles/${job.vifid}/generated`
-              };
-              const imagePaths = await list(listInput);
-              return {
-                  ...job,
-                  generated: imagePaths.map(image => image.key)
-              };
-          }));
-          setJobs(jobsWithImages);
-      },
-  });
-}
+  function listJobs() {
+    client.models.Job.observeQuery().subscribe({
+      next: (data) => setJobs([...data.items]),
+    });
+  }
   useEffect(() => {
     listJobs();
   }, []);
