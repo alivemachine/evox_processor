@@ -15,10 +15,10 @@ import "@aws-amplify/ui-react/styles.css";
 Amplify.configure(outputs);
 
 const client = generateClient<Schema>();
-const generatedData: Record<string, string[]> = {};
 
 export default function App() {
   const [jobs, setJobs] = useState<Array<Schema["Job"]["type"]>>([]);
+  const [generatedData, setGeneratedData] = useState<Record<string, any[]>>({});
 
   
   function listJobs() {
@@ -27,20 +27,25 @@ export default function App() {
         const jobsData = data.items;
         setJobs([...jobsData]);
 
+        const newGeneratedData: Record<string, any[]> = {};
         for (const job of jobsData) {
-          const vifid = job.vifid;
-          const s3Path = `vehicles/${vifid}/generated/`;
-          try {
-            const result = await list({
-              path: s3Path,
-            });
-            generatedData[vifid] = result.map(item => item.key);
-          } catch (error) {
-            console.error(`Error fetching generated images for vifid ${vifid}:`, error);
-          }
+          const imageItems = await getGeneratedImages(job.vifid);
+          newGeneratedData[job.vifid] = imageItems.items;
         }
+        setGeneratedData(newGeneratedData);
       },
     });
+  }
+  async function getGeneratedImages(vifid: string) {
+    try {
+      const result = await list({
+        path: `vehicles/${vifid}/generated/`,
+      });
+      return result;
+    } catch (error) {
+      console.error(`Error fetching generated images for vifid ${vifid}:`, error);
+      return { items: [] };
+    }
   }
   useEffect(() => {
     listJobs();
@@ -118,8 +123,8 @@ export default function App() {
             <td>
               <View width="4rem">
                 <Menu>
-                  {generatedData.map((path, idx) => (
-                    <MenuItem key={idx}>{path}</MenuItem>
+                  {generatedData[job.vifid]?.map((item, idx) => (
+                    <MenuItem key={idx}>{item.path}</MenuItem>
                   ))}
                 </Menu>
               </View>
