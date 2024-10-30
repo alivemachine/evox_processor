@@ -119,11 +119,15 @@ export default function App() {
             <td>{String(job.angle)}</td>
             <td>{String(job.img)}</td>
             <td>
-              <View width="4rem">
+            <View width="4rem">
                 <Menu>
-                  {job.generated.map((path, idx) => (
-                    <MenuItem key={idx}>{path}</MenuItem>
-                  ))}
+                  {job.generated?.length ? (
+                    job.generated.map((path, idx) => (
+                      <MenuItem key={idx}>{path}</MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem>No generated files</MenuItem>
+                  )}
                 </Menu>
               </View>
             </td>
