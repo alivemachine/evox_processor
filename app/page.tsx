@@ -37,7 +37,7 @@ export default function App() {
     if (color === null) { return; }
   
     client.models.Job.create({
-      id: vifid + "_" + color.replace(/[^a-zA-Z0-9]/g, '') + "_spin-0",
+      id: vifid + "_" + color.replace(/[^a-zA-Z0-9]/g, '') + "_spin0",
       vifid: vifid,
       color: color
     });
@@ -46,7 +46,7 @@ export default function App() {
   return (
 <main>
   <h1>Jobs</h1>
-  <button onClick={createJob}>+ new</button>
+  <button onClick={() => createJob()}>+ new</button>
   <table>
     <thead>
       <tr>
