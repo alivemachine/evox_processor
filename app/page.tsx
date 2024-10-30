@@ -42,26 +42,33 @@ export default function App() {
     listJobs();
   }, []);
 
-  function createJob(vifid: string | null = null, color: string | null = null) {
-    let body;
-    let trim;
+    function createJob(vifid: string | null = null, color: string | null = null) {
+    let body: string | null = null;
+    let trim: string | null = null;
+  
     if (vifid === null) {
       vifid = window.prompt("VIF #", "00000");
       body = window.prompt("Body", "Toyota");
-      trim = window.prompt("Trim","Rav4 SUV");
+      trim = window.prompt("Trim", "Rav4 SUV");
     }
-    if (vifid === null||body === null||trim === null) { return; }
+  
+    if (vifid === null || body === null || trim === null) {
+      return;
+    }
   
     if (color === null) {
       color = window.prompt("Color", "silver grey");
     }
-    if (color === null) { return; }
+  
+    if (color === null) {
+      return;
+    }
   
     client.models.Job.create({
       id: vifid + "_" + color.replace(/[^a-zA-Z0-9]/g, '') + "_spin0",
       vifid: vifid,
-      body: body,
-      trim: trim,
+      body: body || "Unknown Body",
+      trim: trim || "Unknown Trim",
       color: color,
       angle: "spin0"
     });
