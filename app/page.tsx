@@ -55,6 +55,8 @@ export default function App() {
       <tr>
         <th>VIF #</th>
         <th>Dataset</th>
+        <th>Body</th>
+        <th>Trim</th>
         <th>Color</th>
         <th>Angle</th>
         <th>Image</th>
@@ -68,6 +70,8 @@ export default function App() {
         <tr key={job.vifid}>
           <td>{String(job.vifid)}</td>
           <td><button>Upload</button></td>
+          <td>{String(job.body)}</td>
+          <td>{String(job.trim)}</td>
           <td>{String(job.color)}</td>
           <td>{String(job.angle)}</td>
           <td>{String(job.img)}</td>
