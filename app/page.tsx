@@ -84,14 +84,7 @@ export default function App() {
         id: id,
         [property]: value
     };
-
     const { data: updatedJob, errors } = await client.models.Job.update(job);
-
-    if (errors) {
-        console.error('Failed to update job:', errors);
-    } else {
-        console.log('Job updated successfully:', updatedJob);
-    }
 }
   return (
 <main>
@@ -127,11 +120,14 @@ export default function App() {
         .map((job, index) => (
           <tr key={index}>
             {job.rowSpan > 0 && (
-              <td rowSpan={job.rowSpan}>{String(job.vifid)}</td>
+              <>
+                <td rowSpan={job.rowSpan}>{String(job.vifid)}</td>
+                <td rowSpan={job.rowSpan}><button>Upload</button></td>
+                <td rowSpan={job.rowSpan}>{String(job.body)}</td>
+                <td rowSpan={job.rowSpan}>{String(job.trim)}</td>
+              </>
             )}
-            <td><button>Upload</button></td>
-            <td>{String(job.body)}</td>
-            <td>{String(job.trim)}</td>
+            
             <td>{String(job.color)}</td>
             <td>{String(job.angle)}</td>
             <td>
