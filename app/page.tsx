@@ -3,8 +3,7 @@
 import { useState, useEffect } from "react";
 import { generateClient } from "aws-amplify/data";
 import { StorageImage } from '@aws-amplify/ui-react-storage';
-import { Menu, MenuItem, View } from '@aws-amplify/ui-react';
-
+import { Menu, MenuItem, View, MenuButton } from '@aws-amplify/ui-react';
 import { list } from 'aws-amplify/storage';
 import type { Schema } from "@/amplify/data/resource";
 import "./../app/app.css";
