@@ -136,8 +136,10 @@ export default function App() {
           if (a.vifid !== b.vifid) {
             return a.vifid > b.vifid ? 1 : -1;
           }
-          if (a.color !== b.color) {
-            return a.color > b.color ? 1 : -1;
+          const colorA = a.color ?? '';
+          const colorB = b.color ?? '';
+          if (colorA !== colorB) {
+            return colorA > colorB ? 1 : -1;
           }
           const angleA = a.angle ?? '';
           const angleB = b.angle ?? '';
