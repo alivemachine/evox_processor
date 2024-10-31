@@ -136,7 +136,9 @@ export default function App() {
           if (a.vifid !== b.vifid) {
             return a.vifid > b.vifid ? 1 : -1;
           }
-          return a.angle.localeCompare(b.angle);
+          const angleA = a.angle ?? '';
+          const angleB = b.angle ?? '';
+          return angleA.localeCompare(angleB);
         })
         .reduce((acc: Array<Schema["Job"]["type"] & { rowSpan: number }>, job, index, array) => {
           if (index === 0 || job.vifid !== array[index - 1].vifid) {
