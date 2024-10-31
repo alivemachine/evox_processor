@@ -109,12 +109,13 @@ export default function App() {
     };
     const { data: updatedJob, errors } = await client.models.Job.update(job);
 }
+//The queue table is designed to sort the data in the database by vifid, color and angle and then merge the relevant rows by column.
   return (
 <main>
   <h1>Jobs</h1>
     <button onClick={() => createJob()}>+ new</button>
-  <table>
-     <thead>
+   <table>
+    <thead>
       <tr>
         <th>VIF #</th>
         <th>Dataset</th>
@@ -162,7 +163,7 @@ export default function App() {
         })
         .map((job, index) => (
           <tr key={index}>
-            {job.rowSpan > 0 && (
+            {job.rowSpan > 0 ? (
               <>
                 <td rowSpan={job.rowSpan}>{String(job.vifid)}</td>
                 <td rowSpan={job.rowSpan}><button>Upload</button></td>
@@ -172,9 +173,17 @@ export default function App() {
                   <button onClick={() => createJob(job.vifid)}>New color</button>
                 </td>
               </>
+            ) : (
+              <>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+                <td></td>
+              </>
             )}
             
-            {job.colorRowSpan > 0 && (
+            {job.colorRowSpan > 0 ? (
               <td rowSpan={job.colorRowSpan}>
                 {String(job.color)}
                 <View width="4rem">
@@ -193,6 +202,8 @@ export default function App() {
                   </Menu>
                 </View>
               </td>
+            ) : (
+              <td></td>
             )}
             
             <td>{String(job.angle)}</td>
@@ -221,7 +232,7 @@ export default function App() {
           </tr>
         ))}
     </tbody>
-    </table>
+  </table>
 </main>
   );
 }
