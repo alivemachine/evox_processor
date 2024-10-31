@@ -112,7 +112,7 @@ export default function App() {
   return (
 <main>
   <h1>Jobs</h1>
-  <button onClick={() => createJob()}>+ new</button>
+    <button onClick={() => createJob()}>+ new</button>
   <table>
     <thead>
       <tr>
@@ -146,15 +146,15 @@ export default function App() {
           } else {
             acc.push({ ...job, rowSpan: 0, colorRowSpan: 1 });
           }
-
-          if (index === 0 || job.color !== array[index - 1].color || job.vifid !== array[index - 1].vifid) {
-            acc[acc.length - 1].colorRowSpan = array.filter(j => j.color === job.color && j.vifid === job.vifid).length;
-          } else {
-            acc[acc.length - 1].colorRowSpan = 0;
-          }
-
           return acc;
         }, [])
+        .map((job, index, array) => {
+          if (index > 0 && job.color === array[index - 1].color && job.vifid === array[index - 1].vifid) {
+            job.colorRowSpan = 0;
+            array[index - 1].colorRowSpan += 1;
+          }
+          return job;
+        })
         .map((job, index) => (
           <tr key={index}>
             {job.rowSpan > 0 && (
@@ -164,33 +164,35 @@ export default function App() {
                 <td rowSpan={job.rowSpan}>{String(job.body)}</td>
                 <td rowSpan={job.rowSpan}>{String(job.trim)}</td>
                 <td rowSpan={job.rowSpan}>
-                  <button onClick={() => createJob(job.vifid)}>New color</button>
+                <button onClick={() => createJob(job.vifid)}>New color</button>
                 </td>
               </>
             )}
+            
             {job.colorRowSpan > 0 && (
               <td rowSpan={job.colorRowSpan}>
                 {String(job.color)}
                 <View width="4rem">
-                  <Menu trigger={<MenuButton>New angles</MenuButton>}>
-                    <MenuItem onClick={() => { createJob(job.vifid, job.color) }} key={"single"}>{"single"}</MenuItem>
-                    <MenuItem onClick={() => {
-                      createJob(job.vifid, job.color, 'spin14');
-                      createJob(job.vifid, job.color, 'spin27');
-                      createJob(job.vifid, job.color, 'spin31');
-                    }} key={"3AC"}>{"3AC"}</MenuItem>
-                    <MenuItem onClick={() => {
-                      for (let angle of angleOptions) {
-                        createJob(job.vifid, job.color, angle);
-                      }
-                    }} key={"360"}>{"360"}</MenuItem>
+                  <Menu  trigger={<MenuButton>New angles</MenuButton>}>
+                      <MenuItem onClick={() => {createJob(job.vifid, job.color)}} key={"single"}>{"single"}</MenuItem>
+                      <MenuItem onClick={() => {
+                        createJob(job.vifid, job.color, 'spin14');
+                        createJob(job.vifid, job.color, 'spin27');
+                        createJob(job.vifid, job.color, 'spin31');
+                      }} key={"3AC"}>{"3AC"}</MenuItem>
+                      <MenuItem onClick={() => {
+                        for (let angle of angleOptions) {
+                          createJob(job.vifid, job.color, angle);
+                        }
+                      }} key={"360"}>{"360"}</MenuItem>
                   </Menu>
                 </View>
               </td>
             )}
+            
             <td>{String(job.angle)}</td>
             <td>
-              {job.img ? <StorageImage alt={job.img} path={job.img} /> : null}
+            {job.img ? <StorageImage alt={job.img} path={job.img} /> : null}
             </td>
             <td>
               <View width="4rem">
