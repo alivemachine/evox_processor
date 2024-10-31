@@ -89,7 +89,7 @@ export default function App() {
     }
     console.log(vifid, color, angle);
     client.models.Job.create({
-      id: vifid + "_" + color.replace(/[^a-zA-Z0-9]/g, '') + "_spin0",
+      id: vifid + "_" + color.replace(/[^a-zA-Z0-9]/g, '') + "_"+angle,
       vifid: vifid,
       body: body,
       trim: trim,
