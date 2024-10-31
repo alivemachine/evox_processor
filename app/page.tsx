@@ -119,6 +119,8 @@ export default function App() {
     };
     const { data: updatedJob, errors } = await client.models.Job.update(job);
 }
+
+
 //The queue table is designed to sort the data in the database by vifid, color and angle and then merge the relevant rows by column.
   return (
 <main>
@@ -186,14 +188,14 @@ export default function App() {
             )}
             {job.colorRowSpan > 0 && (
               <>
-              <td>{String(job.color)}
+              <td rowSpan={job.colorRowSpan}>{String(job.color)}
                 <View width="4rem">
                   <Menu trigger={<MenuButton>New angles</MenuButton>}>
                     <MenuItem onClick={() => {createJob(job.vifid, job.color)}} key={"single"}>{"single"}</MenuItem>
                     <MenuItem onClick={() => {
                       createJob(job.vifid, job.color, 'spin14');
-                      createJob(job.vifid, job.color, 'spin27');
-                      createJob(job.vifid, job.color, 'spin31');
+                      createJob(job.vifid, job.color, 'spin26');
+                      createJob(job.vifid, job.color, 'spin30');
                     }} key={"3AC"}>{"3AC"}</MenuItem>
                     <MenuItem onClick={() => {
                       for (let angle of angleOptions) {
