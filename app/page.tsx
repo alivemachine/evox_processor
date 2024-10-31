@@ -200,7 +200,7 @@ export default function App() {
               <td>
                 <Menu>
                   {generatedData[job.vifid]?.map((item, idx) => (
-                    <MenuItem key={idx} onClick={() => updateJob(job.vifid, job.color, job.angle, 'img', item.path)}>
+                    <MenuItem key={idx} onClick={() => updateJob(job.vifid,  job.color ?? '', job.angle ?? '', 'img', item.path)}>
                       {item.path}
                     </MenuItem>
                   ))}
@@ -209,13 +209,13 @@ export default function App() {
               <td>
                 <Menu trigger={<MenuButton>{workflows.find(w => w.id === job.workflow)?.name || 'Unknown Workflow'}</MenuButton>}>
                   {workflows.map((workflow, idx) => (
-                    <MenuItem key={idx} onClick={() => updateJob(job.vifid, job.color, job.angle, 'workflow', workflow.id)}>
+                    <MenuItem key={idx} onClick={() => updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'workflow', workflow.id)}>
                       {workflow.name}
                     </MenuItem>
                   ))}
                 </Menu>
               </td>
-              <td>{job.workflow_params || 'null'}</td>
+              <td>{String(job.workflow_params) || ''}</td>
               <td>
                 <button onClick={() => removeJob(job.id)}>X</button>
                 <button>RUN</button>
