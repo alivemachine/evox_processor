@@ -171,6 +171,7 @@ export default function App() {
             job.colorRowSpan = 0;
             array[index - 1].colorRowSpan += 1;
           }
+          console.log(job);
           return job;
         })
         .map((job, index) => (
@@ -186,6 +187,7 @@ export default function App() {
                 </td>
               </>
             )}
+            
             {job.colorRowSpan > 0 && (
               <>
               <td rowSpan={job.colorRowSpan}>{String(job.color)}
@@ -245,6 +247,7 @@ export default function App() {
             </td>
           </tr>
         ))}
+        
     </tbody>
   </table>
 </main>
