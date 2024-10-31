@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { generateClient } from "aws-amplify/data";
 import { StorageImage } from '@aws-amplify/ui-react-storage';
 import { Menu, MenuItem, View } from '@aws-amplify/ui-react';
-import { angleOptions } from './config.ts';
+import { angleOptions } from '../../app/config';
 import { list } from 'aws-amplify/storage';
 import type { Schema } from "@/amplify/data/resource";
 import "./../app/app.css";
