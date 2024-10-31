@@ -122,7 +122,6 @@ export default function App() {
         <th>Trim</th>
         <th></th>
         <th>Color</th>
-        <th></th>
         <th>Angle</th>
         <th>Image</th>
         <th>Generated</th>
@@ -133,7 +132,12 @@ export default function App() {
     </thead>
     <tbody>
       {jobs
-        .sort((a, b) => (a.vifid > b.vifid ? 1 : -1))
+        .sort((a, b) => {
+          if (a.vifid !== b.vifid) {
+            return a.vifid > b.vifid ? 1 : -1;
+          }
+          return a.angle.localeCompare(b.angle);
+        })
         .reduce((acc: Array<Schema["Job"]["type"] & { rowSpan: number }>, job, index, array) => {
           if (index === 0 || job.vifid !== array[index - 1].vifid) {
             acc.push({ ...job, rowSpan: array.filter(j => j.vifid === job.vifid).length });
@@ -158,12 +162,12 @@ export default function App() {
             
             <td>{String(job.color)}</td>
             <View width="4rem">
-                <Menu  trigger={<MenuButton>Product</MenuButton>}>
+                <Menu  trigger={<MenuButton>{job.angle}</MenuButton>}>
                     <MenuItem onClick={() => {createJob(job.vifid, job.color)}} key={"single"}>{"single"}</MenuItem>
                     <MenuItem onClick={() => {
-                      createJob(job.vifid, job.color, 'spin-14');
-                      createJob(job.vifid, job.color, 'spin-27');
-                      createJob(job.vifid, job.color, 'spin-31');
+                      createJob(job.vifid, job.color, 'spin14');
+                      createJob(job.vifid, job.color, 'spin27');
+                      createJob(job.vifid, job.color, 'spin31');
                     }} key={"3AC"}>{"3AC"}</MenuItem>
                     <MenuItem onClick={() => {
                       for (let angle of angleOptions) {
@@ -172,7 +176,6 @@ export default function App() {
                     }} key={"360"}>{"360"}</MenuItem>
                 </Menu>
               </View>
-            <td>{String(job.angle)}</td>
             <td>
             {job.img ? <StorageImage alt={job.img} path={job.img} /> : null}
             </td>
