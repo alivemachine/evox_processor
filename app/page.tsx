@@ -37,6 +37,7 @@ const angleOptions = [
 export default function App() {
   const [jobs, setJobs] = useState<Array<Schema["Job"]["type"]>>([]);
   const [generatedData, setGeneratedData] = useState<Record<string, any[]>>({});
+  const [workflows, setWorkflows] = useState([]);
 
   
   function listJobs() {
@@ -54,6 +55,14 @@ export default function App() {
       },
     });
   }
+  async function listWorkflows() {
+    try {
+      const result = await client.models.Workflow.list();
+      setWorkflows(result.items);
+    } catch (error) {
+      console.error('Error fetching workflows:', error);
+    }
+  }
   async function getGeneratedImages(vifid: string) {
     try {
       const result = await list({
@@ -67,6 +76,7 @@ export default function App() {
   }
   useEffect(() => {
     listJobs();
+    listWorkflows();
   }, []);
 
   function createJob(vifid: string | null = null, color: string | null = null, angle: string | null = null) {
@@ -163,7 +173,7 @@ export default function App() {
         })
         .map((job, index) => (
           <tr key={index}>
-            {job.rowSpan > 0 ? (
+            {job.rowSpan > 0 && (
               <>
                 <td rowSpan={job.rowSpan}>{String(job.vifid)}</td>
                 <td rowSpan={job.rowSpan}><button>Upload</button></td>
@@ -173,18 +183,9 @@ export default function App() {
                   <button onClick={() => createJob(job.vifid)}>New color</button>
                 </td>
               </>
-            ) : (
-              <>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-              </>
             )}
-            
-            {job.colorRowSpan > 0 ? (
-              <td rowSpan={job.colorRowSpan}>
+
+              <td>
                 {String(job.color)}
                 <View width="4rem">
                   <Menu trigger={<MenuButton>New angles</MenuButton>}>
@@ -202,9 +203,7 @@ export default function App() {
                   </Menu>
                 </View>
               </td>
-            ) : (
-              <td></td>
-            )}
+
             
             <td>{String(job.angle)}</td>
             <td>
