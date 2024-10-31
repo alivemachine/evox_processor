@@ -78,7 +78,7 @@ export default function App() {
       body = window.prompt("Body", "Toyota");
       trim = window.prompt("Trim","Rav4 SUV");
     }
-    if (vifid === null||body === null||trim === null) { return; }
+    if (vifid === null) { return; }
     console.log(vifid, color, angle);
     if (color === null) {
       color = window.prompt("Color", "silver grey");
