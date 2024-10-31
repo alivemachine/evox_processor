@@ -37,9 +37,16 @@ const angleOptions = [
 export default function App() {
   const [jobs, setJobs] = useState<Array<Schema["Job"]["type"]>>([]);
   const [generatedData, setGeneratedData] = useState<Record<string, any[]>>({});
-  const [workflows, setWorkflows] = useState([]);
+  const [workflows, setWorkflows] =  useState<Array<Schema["Workflow"]["type"]>>([]);
 
-  
+  async function listWorkflows() {
+    try {
+      const result = await client.models.Workflow.list();
+      setWorkflows(result.data);
+    } catch (error) {
+      console.error('Error fetching workflows:', error);
+    }
+  }
   function listJobs() {
     client.models.Job.observeQuery().subscribe({
       next: async (data) => {
@@ -55,14 +62,7 @@ export default function App() {
       },
     });
   }
-  async function listWorkflows() {
-    try {
-      const result = await client.models.Workflow.list();
-      setWorkflows(result.items);
-    } catch (error) {
-      console.error('Error fetching workflows:', error);
-    }
-  }
+  
   async function getGeneratedImages(vifid: string) {
     try {
       const result = await list({
@@ -184,7 +184,7 @@ export default function App() {
                 </td>
               </>
             )}
-
+            
               <td>
                 {String(job.color)}
                 <View width="4rem">
@@ -222,7 +222,13 @@ export default function App() {
                 </Menu>
               </View>
             </td>
-            <td>{String(job.workflow)}</td>
+            <td><View width="4rem">
+                  <Menu>
+                    {workflows.map((workflow, idx) => (
+                      <MenuItem key={idx}>{workflow.name}</MenuItem>
+                    ))}
+                  </Menu>
+                </View></td>
             <td>{String(job.workflow_params)}</td>
             <td>
               <button onClick={() => removeJob(job.id)}>X</button>
