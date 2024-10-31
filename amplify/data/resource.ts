@@ -1,5 +1,5 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
-import { angleOptions } from './config';
+import { angleOptions } from './config.ts';
 
 /*== STEP 1 ===============================================================
 The section below creates a database with the structure {"id#":{"color":{"angle":{}}}}.
