@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { generateClient } from "aws-amplify/data";
 import { StorageImage } from '@aws-amplify/ui-react-storage';
 import { Menu, MenuItem, View } from '@aws-amplify/ui-react';
-import { angleOptions } from './../app/config';
+
 import { list } from 'aws-amplify/storage';
 import type { Schema } from "@/amplify/data/resource";
 import "./../app/app.css";
@@ -15,7 +15,26 @@ import "@aws-amplify/ui-react/styles.css";
 Amplify.configure(outputs);
 
 const client = generateClient<Schema>();
-
+const angleOptions = [
+  "spin0", 
+  "spin20", 
+  "spin40", 
+  "spin60", 
+  "spin80", 
+  "spin100", 
+  "spin120", 
+  "spin140", 
+  "spin160", 
+  "spin180", 
+  "spin200", 
+  "spin220", 
+  "spin240", 
+  "spin260", 
+  "spin280", 
+  "spin300", 
+  "spin320", 
+  "spin340"
+];
 export default function App() {
   const [jobs, setJobs] = useState<Array<Schema["Job"]["type"]>>([]);
   const [generatedData, setGeneratedData] = useState<Record<string, any[]>>({});

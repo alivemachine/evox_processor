@@ -1,5 +1,25 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
-import { angleOptions } from '../../app/config'
+
+const angleOptions = [
+  "spin0", 
+  "spin20", 
+  "spin40", 
+  "spin60", 
+  "spin80", 
+  "spin100", 
+  "spin120", 
+  "spin140", 
+  "spin160", 
+  "spin180", 
+  "spin200", 
+  "spin220", 
+  "spin240", 
+  "spin260", 
+  "spin280", 
+  "spin300", 
+  "spin320", 
+  "spin340"
+];
 
 /*== STEP 1 ===============================================================
 The section below creates a database with the structure {"id#":{"color":{"angle":{}}}}.
