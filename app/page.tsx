@@ -184,9 +184,9 @@ export default function App() {
                 </td>
               </>
             )}
-            
-              <td>
-                {String(job.color)}
+            {job.colorRowSpan > 0 && (
+              <>
+              <td>{String(job.color)}
                 <View width="4rem">
                   <Menu trigger={<MenuButton>New angles</MenuButton>}>
                     <MenuItem onClick={() => {createJob(job.vifid, job.color)}} key={"single"}>{"single"}</MenuItem>
@@ -203,7 +203,8 @@ export default function App() {
                   </Menu>
                 </View>
               </td>
-
+              </>
+            )}
             
             <td>{String(job.angle)}</td>
             <td>
@@ -223,9 +224,15 @@ export default function App() {
               </View>
             </td>
             <td><View width="4rem">
-                  <Menu>
+                <Menu trigger={<MenuButton>
+                  {workflows.find((workflow) => workflow.id === job.workflow)?.name || 'Unknown Workflow'}
+                </MenuButton>}>
                     {workflows.map((workflow, idx) => (
-                      <MenuItem key={idx}>{workflow.name}</MenuItem>
+                      <MenuItem onClick={() => {
+                        if (job.vifid && job.color && job.angle) {
+                          updateJob(job.vifid, job.color, job.angle, 'workflow', workflow.id);
+                        }
+                      }} key={idx}>{workflow.name}</MenuItem>
                     ))}
                   </Menu>
                 </View></td>
