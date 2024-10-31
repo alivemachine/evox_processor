@@ -1,0 +1,20 @@
+export const angleOptions = [
+    "spin-0", 
+    "spin-20", 
+    "spin-40", 
+    "spin-60", 
+    "spin-80", 
+    "spin-100", 
+    "spin-120", 
+    "spin-140", 
+    "spin-160", 
+    "spin-180", 
+    "spin-200", 
+    "spin-220", 
+    "spin-240", 
+    "spin-260", 
+    "spin-280", 
+    "spin-300", 
+    "spin-320", 
+    "spin-340"
+  ];

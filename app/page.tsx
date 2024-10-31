@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { generateClient } from "aws-amplify/data";
 import { StorageImage } from '@aws-amplify/ui-react-storage';
 import { Menu, MenuItem, View } from '@aws-amplify/ui-react';
-
+import { angleOptions } from './config';
 import { list } from 'aws-amplify/storage';
 import type { Schema } from "@/amplify/data/resource";
 import "./../app/app.css";
@@ -51,29 +51,34 @@ export default function App() {
     listJobs();
   }, []);
 
-  function createJob(vifid: string | null = null, color: string | null = null) {
+  function createJob(vifid: string | null = null, color: string | null = null, angle: string | null = null) {
     let body: string | null = null;
     let trim: string | null = null;
+    console.log(vifid, color, angle);
     if (vifid === null) {
       vifid = window.prompt("VIF #", "00000");
       body = window.prompt("Body", "Toyota");
       trim = window.prompt("Trim","Rav4 SUV");
     }
     if (vifid === null||body === null||trim === null) { return; }
-  
+    console.log(vifid, color, angle);
     if (color === null) {
       color = window.prompt("Color", "silver grey");
     }
     if (color === null) { return; }
-  
+    if (angle === null) {
+      angle = angleOptions[0];
+    }
+    console.log(vifid, color, angle);
     client.models.Job.create({
       id: vifid + "_" + color.replace(/[^a-zA-Z0-9]/g, '') + "_spin0",
       vifid: vifid,
       body: body,
       trim: trim,
       color: color,
-      angle: "spin0"
+      angle: angle
     });
+    console.log(vifid, color, angle);
   }
   function removeJob(id: string) {
     client.models.Job.delete({ id: id });
@@ -97,8 +102,9 @@ export default function App() {
         <th>Dataset</th>
         <th>Body</th>
         <th>Trim</th>
-        <th>UI Actions</th>
+        <th></th>
         <th>Color</th>
+        <th></th>
         <th>Angle</th>
         <th>Image</th>
         <th>Generated</th>
@@ -128,13 +134,27 @@ export default function App() {
                 <td rowSpan={job.rowSpan}>{String(job.trim)}</td>
                 <td rowSpan={job.rowSpan}>
                 <button onClick={() => createJob(job.vifid)}>New color</button>
-                <button onClick={() => createJob(job.vifid, job.color)}>New angle</button>
-                <button onClick={() => removeJob(job.id)}>X</button>
                 </td>
               </>
             )}
             
             <td>{String(job.color)}</td>
+            <button onClick={() => createJob(job.vifid, job.color)}>New angle</button>
+            <View width="4rem">
+                <Menu  trigger={<MenuButton>Product</MenuButton>}>
+                    <MenuItem onClick={() => {createJob(job.vifid, job.color)}} key={"single"}>{"single"}</MenuItem>
+                    <MenuItem onClick={() => {
+                      for (let angle of angleOptions) {
+                        createJob(job.vifid, job.color, angle);
+                      }
+                    }} key={"3AC"}>{"3AC"}</MenuItem>
+                    <MenuItem onClick={() => {
+                      createJob(job.vifid, job.color, 'spin-14');
+                      createJob(job.vifid, job.color, 'spin-27');
+                      createJob(job.vifid, job.color, 'spin-31');
+                    }} key={"360"}>{"360"}</MenuItem>
+                </Menu>
+              </View>
             <td>{String(job.angle)}</td>
             <td>
             {job.img ? <StorageImage alt={job.img} path={job.img} /> : null}
@@ -155,7 +175,7 @@ export default function App() {
             <td>{String(job.workflow)}</td>
             <td>{String(job.workflow_params)}</td>
             <td>
-              
+              <button onClick={() => removeJob(job.id)}>X</button>
               <button>RUN</button>
             </td>
           </tr>
