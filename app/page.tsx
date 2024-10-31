@@ -157,19 +157,18 @@ export default function App() {
             )}
             
             <td>{String(job.color)}</td>
-            <button onClick={() => createJob(job.vifid, job.color)}>New angle</button>
             <View width="4rem">
                 <Menu  trigger={<MenuButton>Product</MenuButton>}>
                     <MenuItem onClick={() => {createJob(job.vifid, job.color)}} key={"single"}>{"single"}</MenuItem>
                     <MenuItem onClick={() => {
-                      for (let angle of angleOptions) {
-                        createJob(job.vifid, job.color, angle);
-                      }
-                    }} key={"3AC"}>{"3AC"}</MenuItem>
-                    <MenuItem onClick={() => {
                       createJob(job.vifid, job.color, 'spin-14');
                       createJob(job.vifid, job.color, 'spin-27');
                       createJob(job.vifid, job.color, 'spin-31');
+                    }} key={"3AC"}>{"3AC"}</MenuItem>
+                    <MenuItem onClick={() => {
+                      for (let angle of angleOptions) {
+                        createJob(job.vifid, job.color, angle);
+                      }
                     }} key={"360"}>{"360"}</MenuItem>
                 </Menu>
               </View>
