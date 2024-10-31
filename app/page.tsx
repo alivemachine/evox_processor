@@ -97,6 +97,7 @@ export default function App() {
         <th>Dataset</th>
         <th>Body</th>
         <th>Trim</th>
+        <th>UI Actions</th>
         <th>Color</th>
         <th>Angle</th>
         <th>Image</th>
@@ -125,6 +126,11 @@ export default function App() {
                 <td rowSpan={job.rowSpan}><button>Upload</button></td>
                 <td rowSpan={job.rowSpan}>{String(job.body)}</td>
                 <td rowSpan={job.rowSpan}>{String(job.trim)}</td>
+                <td rowSpan={job.rowSpan}>
+                <button onClick={() => createJob(job.vifid)}>New color</button>
+                <button onClick={() => createJob(job.vifid, job.color)}>New angle</button>
+                <button onClick={() => removeJob(job.id)}>X</button>
+                </td>
               </>
             )}
             
@@ -149,9 +155,7 @@ export default function App() {
             <td>{String(job.workflow)}</td>
             <td>{String(job.workflow_params)}</td>
             <td>
-              <button onClick={() => createJob(job.vifid)}>New color</button>
-              <button onClick={() => createJob(job.vifid, job.color)}>New angle</button>
-              <button onClick={() => removeJob(job.id)}>X</button>
+              
               <button>RUN</button>
             </td>
           </tr>

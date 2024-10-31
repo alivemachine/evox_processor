@@ -23,7 +23,8 @@ const schema = a.schema({
     Workflow: a
     .model({
       name: a.string().required(),
-      version: a.integer().required(),
+      version: a.integer(),
+      visibility: a.enum(["private", "released"]),
       description: a.string(),
       type: a.enum(["base", "upscale","inpaint"]),
       json: a.json().required(),
