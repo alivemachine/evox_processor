@@ -158,96 +158,71 @@ export default function App() {
           const angleB = b.angle ?? '';
           return angleA.localeCompare(angleB);
         })
-        .reduce((acc: Array<Schema["Job"]["type"] & { rowSpan: number, colorRowSpan: number }>, job, index, array) => {
-          if (index === 0 || job.vifid !== array[index - 1].vifid) {
-            acc.push({ ...job, rowSpan: array.filter(j => j.vifid === job.vifid).length, colorRowSpan: 1 });
-          } else {
-            acc.push({ ...job, rowSpan: 0, colorRowSpan: 1 });
-          }
-          return acc;
-        }, [])
         .map((job, index, array) => {
-          if (index > 0 && job.color === array[index - 1].color && job.vifid === array[index - 1].vifid) {
-            job.colorRowSpan = 0;
-            array[index - 1].colorRowSpan += 1;
-          }
-          console.log(job);
-          return job;
-        })
-        .map((job, index) => (
-          <tr key={index}>
-            {job.rowSpan > 0 && (
-              <>
-                <td rowSpan={job.rowSpan}>{String(job.vifid)}</td>
-                <td rowSpan={job.rowSpan}><button>Upload</button></td>
-                <td rowSpan={job.rowSpan}>{String(job.body)}</td>
-                <td rowSpan={job.rowSpan}>{String(job.trim)}</td>
-                <td rowSpan={job.rowSpan}>
-                  <button onClick={() => createJob(job.vifid)}>New color</button>
-                </td>
-              </>
-            )}
-            
-            {job.colorRowSpan > 0 && (
-              <>
-              <td rowSpan={job.colorRowSpan}>{String(job.color)}
-                <View width="4rem">
-                  <Menu trigger={<MenuButton>New angles</MenuButton>}>
-                    <MenuItem onClick={() => {createJob(job.vifid, job.color)}} key={"single"}>{"single"}</MenuItem>
-                    <MenuItem onClick={() => {
-                      createJob(job.vifid, job.color, 'spin14');
-                      createJob(job.vifid, job.color, 'spin26');
-                      createJob(job.vifid, job.color, 'spin30');
-                    }} key={"3AC"}>{"3AC"}</MenuItem>
-                    <MenuItem onClick={() => {
-                      for (let angle of angleOptions) {
-                        createJob(job.vifid, job.color, angle);
-                      }
-                    }} key={"360"}>{"360"}</MenuItem>
-                  </Menu>
-                </View>
-              </td>
-            </>
-            )}
-            
-            <td>{String(job.angle)}</td>
-            <td>
-              {job.img ? <StorageImage alt={job.img} path={job.img} /> : null}
-            </td>
-            <td>
-              <View width="4rem">
+          const isFirstRowForVifid = index === 0 || job.vifid !== array[index - 1].vifid;
+          const isFirstRowForColor = isFirstRowForVifid || job.color !== array[index - 1].color;
+          const rowSpan = array.filter((j) => j.vifid === job.vifid).length;
+          const colorRowSpan = array.filter((j) => j.vifid === job.vifid && j.color === job.color).length;
+    
+          return (
+            <tr key={index}>
+              {isFirstRowForVifid && (
+                <>
+                  <td rowSpan={rowSpan}>{job.vifid}</td>
+                  <td rowSpan={rowSpan}><button>Upload</button></td>
+                  <td rowSpan={rowSpan}>{job.body}</td>
+                  <td rowSpan={rowSpan}>{job.trim}</td>
+                  <td rowSpan={rowSpan}>
+                    <button onClick={() => createJob(job.vifid)}>New color</button>
+                  </td>
+                </>
+              )}
+              
+              {isFirstRowForColor && (
+                <>
+                  <td rowSpan={colorRowSpan}>{job.color}</td>
+                  <td rowSpan={colorRowSpan}>
+                    <Menu trigger={<MenuButton>New angles</MenuButton>}>
+                      <MenuItem onClick={() => createJob(job.vifid, job.color)}>single</MenuItem>
+                      <MenuItem onClick={() => {
+                        createJob(job.vifid, job.color, 'spin14');
+                        createJob(job.vifid, job.color, 'spin26');
+                        createJob(job.vifid, job.color, 'spin30');
+                      }}>3AC</MenuItem>
+                      <MenuItem onClick={() => angleOptions.forEach(angle => createJob(job.vifid, job.color, angle))}>360</MenuItem>
+                    </Menu>
+                  </td>
+                </>
+              )}
+    
+              <td>{job.angle}</td>
+              <td>{job.img ? <StorageImage alt={job.img} path={job.img} /> : null}</td>
+              <td>
                 <Menu>
                   {generatedData[job.vifid]?.map((item, idx) => (
-                    <MenuItem onClick={() => {
-                      if (job.vifid && job.color && job.angle) {
-                        updateJob(job.vifid, job.color, job.angle, 'img', item.path);
-                      }
-                    }} key={idx}>{item.path}</MenuItem>
+                    <MenuItem key={idx} onClick={() => updateJob(job.vifid, job.color, job.angle, 'img', item.path)}>
+                      {item.path}
+                    </MenuItem>
                   ))}
                 </Menu>
-              </View>
-            </td>
-            <td><View width="4rem">
-                <Menu trigger={<MenuButton>
-                  {workflows.find((workflow) => workflow.id === job.workflow)?.name || 'Unknown Workflow'}
-                </MenuButton>}>
-                    {workflows.map((workflow, idx) => (
-                      <MenuItem onClick={() => {
-                        if (job.vifid && job.color && job.angle) {
-                          updateJob(job.vifid, job.color, job.angle, 'workflow', workflow.id);
-                        }
-                      }} key={idx}>{workflow.name}</MenuItem>
-                    ))}
-                  </Menu>
-                </View></td>
-            <td>{String(job.workflow_params)}</td>
-            <td>
-              <button onClick={() => removeJob(job.id)}>X</button>
-              <button>RUN</button>
-            </td>
-          </tr>
-        ))}
-        
+              </td>
+              <td>
+                <Menu trigger={<MenuButton>{workflows.find(w => w.id === job.workflow)?.name || 'Unknown Workflow'}</MenuButton>}>
+                  {workflows.map((workflow, idx) => (
+                    <MenuItem key={idx} onClick={() => updateJob(job.vifid, job.color, job.angle, 'workflow', workflow.id)}>
+                      {workflow.name}
+                    </MenuItem>
+                  ))}
+                </Menu>
+              </td>
+              <td>{job.workflow_params || 'null'}</td>
+              <td>
+                <button onClick={() => removeJob(job.id)}>X</button>
+                <button>RUN</button>
+              </td>
+            </tr>
+          );
+        })}
     </tbody>
   </table>
 </main>
