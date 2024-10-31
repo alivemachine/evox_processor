@@ -19,6 +19,16 @@ const schema = a.schema({
       workflow_params: a.json(),
     })
     .authorization((allow) => [allow.publicApiKey()]),
+
+    Workflow: a
+    .model({
+      name: a.string().required(),
+      version: a.integer().required(),
+      description: a.string(),
+      type: a.enum(["base", "upscale","inpaint"]),
+      json: a.json().required(),
+    })
+    .authorization((allow) => [allow.publicApiKey()]),
 });
 
 export type Schema = ClientSchema<typeof schema>;
