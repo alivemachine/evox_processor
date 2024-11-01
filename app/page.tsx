@@ -2,6 +2,7 @@
 
 import { useState, useEffect, SetStateAction } from "react";
 import { generateClient } from "aws-amplify/data";
+import { Cache } from 'aws-amplify/utils';
 import { StorageImage } from '@aws-amplify/ui-react-storage';
 import { Menu, MenuItem, View, MenuButton } from '@aws-amplify/ui-react';
 import { list } from 'aws-amplify/storage';
@@ -39,7 +40,7 @@ export default function App() {
   const [generatedData, setGeneratedData] = useState<Record<string, any[]>>({});
   const [workflows, setWorkflows] =  useState<Array<Schema["Workflow"]["type"]>>([]);
   const [selectedJob, setSelectedJob] = useState(() => {
-    return localStorage.getItem('selectedJob') || 'all';
+    return Cache.getItem('selectedJob') || 'all';
   });
 
   async function listWorkflows() {
@@ -80,7 +81,7 @@ export default function App() {
   useEffect(() => {
     listJobs();
     listWorkflows();
-    localStorage.setItem('selectedJob', selectedJob);
+    Cache.setItem('selectedJob', selectedJob);
   }, [selectedJob]);
 
   function createJob(vifid: string | null = null, color: string | null = null, angle: string | null = null) {
