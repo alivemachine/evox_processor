@@ -185,7 +185,7 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
             <tr key={index}>
               {isFirstRowForVifid && (
                 <>
-                  <td rowSpan={rowSpan}>{job.body}{job.trim}</td>
+                  <td rowSpan={rowSpan}>{job.vifid} {job.body} {job.trim}</td>
                   <td rowSpan={rowSpan}><button>Upload</button></td>
                   
                   <td rowSpan={rowSpan}>

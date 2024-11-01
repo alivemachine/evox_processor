@@ -1,4 +1,5 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
+import { getWorkflowParams } from "../get-workflow-params/resource"
 
 const angleOptions = [
   "spin0", 
@@ -51,6 +52,15 @@ const schema = a.schema({
       json: a.json().required(),
     })
     .authorization((allow) => [allow.publicApiKey()]),
+
+      
+    getWorkflowParams: a
+    .query()
+    .arguments({
+      name: a.string(),
+    })
+    .returns(a.string())
+    .handler(a.handler.function(getWorkflowParams)),
 });
 
 export type Schema = ClientSchema<typeof schema>;
