@@ -39,9 +39,7 @@ export default function App() {
   const [jobs, setJobs] = useState<Array<Schema["Job"]["type"]>>([]);
   const [generatedData, setGeneratedData] = useState<Record<string, any[]>>({});
   const [workflows, setWorkflows] =  useState<Array<Schema["Workflow"]["type"]>>([]);
-  const [selectedJob, setSelectedJob] = useState(() => {
-    return Cache.getItem('selectedJob') || 'all';
-  });
+  const [selectedJob, setSelectedJob] = useState('all');
 
   async function listWorkflows() {
     try {
@@ -81,8 +79,7 @@ export default function App() {
   useEffect(() => {
     listJobs();
     listWorkflows();
-    Cache.setItem('selectedJob', selectedJob);
-  }, [selectedJob]);
+  }, []);
 
   function createJob(vifid: string | null = null, color: string | null = null, angle: string | null = null) {
     let body: string | null = null;
