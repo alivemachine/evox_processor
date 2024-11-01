@@ -45,6 +45,10 @@ export default function App() {
     try {
       const result = await client.models.Workflow.list();
       setWorkflows(result.data);
+      
+    client.queries.getWorkflowParams({
+      name: "ggggreg",
+    })
     } catch (error) {
       console.error('Error fetching workflows:', error);
     }
