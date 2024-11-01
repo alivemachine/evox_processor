@@ -39,7 +39,7 @@ export default function App() {
   const [jobs, setJobs] = useState<Array<Schema["Job"]["type"]>>([]);
   const [generatedData, setGeneratedData] = useState<Record<string, any[]>>({});
   const [workflows, setWorkflows] =  useState<Array<Schema["Workflow"]["type"]>>([]);
-  const [selectedJob, setSelectedJob] = useState('all');
+  const [selectedJob, setSelectedJob] = useState(jobs.length > 0 ? jobs[0].vifid : 'all');
 
   async function listWorkflows() {
     try {
@@ -128,15 +128,25 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
   return (
 <main>
   <h1>Jobs</h1>
-  <Menu trigger={<MenuButton>{selectedJob}</MenuButton>}>
-  <MenuItem onClick={() => setSelectedJob('all')}>All</MenuItem>
-        {jobs.map(job => (
-          <MenuItem key={job.vifid} onClick={() => setSelectedJob(job.vifid)}>
-            {job.vifid}
-          </MenuItem>
-          ))}
-  </Menu>
-    <button onClick={() => createJob()}>+ new</button>
+  <table>
+    <tbody>
+      <tr>
+        <td>
+          <button onClick={() => createJob()}>+ new</button>
+        </td>
+        <td>
+          <Menu trigger={<MenuButton>{selectedJob}</MenuButton>}>
+            <MenuItem onClick={() => setSelectedJob('all')}>All</MenuItem>
+            {Array.from(new Set(jobs.map(job => job.vifid))).map(vifid => (
+              <MenuItem key={vifid} onClick={() => setSelectedJob(vifid)}>
+                {vifid}
+              </MenuItem>
+            ))}
+          </Menu>
+        </td>
+      </tr>
+    </tbody>
+  </table>
    <table>
     <thead>
       <tr>
