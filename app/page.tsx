@@ -4,7 +4,7 @@ import { useState, useEffect, SetStateAction } from "react";
 import { generateClient } from "aws-amplify/data";
 import { Cache } from 'aws-amplify/utils';
 import { StorageImage } from '@aws-amplify/ui-react-storage';
-import { Menu, MenuItem, View, MenuButton } from '@aws-amplify/ui-react';
+import { Menu, MenuItem, View, MenuButton, Divider } from '@aws-amplify/ui-react';
 import { list } from 'aws-amplify/storage';
 import type { Schema } from "@/amplify/data/resource";
 import "./../app/app.css";
@@ -138,6 +138,7 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
                 {vifid}
               </MenuItem>
             ))}
+            <Divider />
             <MenuItem onClick={() => createJob()}>+ new</MenuItem>
           </Menu>
         </td>
@@ -147,16 +148,13 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
    <table>
     <thead>
       <tr>
-        <th>VIF #</th>
+        <th></th>
         <th>Dataset</th>
-        <th>Body</th>
-        <th>Trim</th>
         <th></th>
         <th>Color</th>
         <th></th>
         <th>Angle</th>
         <th>Image</th>
-        <th>Generated</th>
         <th>Workflow</th>
         <th>Workflow Params</th>
         <th>Actions</th>
@@ -187,10 +185,9 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
             <tr key={index}>
               {isFirstRowForVifid && (
                 <>
-                  <td rowSpan={rowSpan}>{job.vifid}</td>
+                  <td rowSpan={rowSpan}>{job.body}{job.trim}</td>
                   <td rowSpan={rowSpan}><button>Upload</button></td>
-                  <td rowSpan={rowSpan}>{job.body}</td>
-                  <td rowSpan={rowSpan}>{job.trim}</td>
+                  
                   <td rowSpan={rowSpan}>
                     <button onClick={() => createJob(job.vifid)}>New color</button>
                   </td>
@@ -215,15 +212,24 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
               )}
     
               <td>{job.angle}</td>
-              <td>{job.img ? <StorageImage alt={job.img} path={job.img} /> : null}</td>
               <td>
-                <Menu>
-                  {generatedData[job.vifid]?.map((item, idx) => (
-                    <MenuItem key={idx} onClick={() => updateJob(job.vifid,  job.color ?? '', job.angle ?? '', 'img', item.path)}>
-                      {item.path}
-                    </MenuItem>
-                  ))}
-                </Menu>
+                {job.img ? (
+                  <Menu trigger={<MenuButton><StorageImage alt={job.img} path={job.img} /></MenuButton>}>
+                    {generatedData[job.vifid]?.map((item, idx) => (
+                      <MenuItem key={idx} onClick={() => updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'img', item.path)}>
+                        {item.path}
+                      </MenuItem>
+                    ))}
+                  </Menu>
+                ) : (
+                  <Menu>
+                    {generatedData[job.vifid]?.map((item, idx) => (
+                      <MenuItem key={idx} onClick={() => updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'img', item.path)}>
+                        {item.path}
+                      </MenuItem>
+                    ))}
+                  </Menu>
+                )}
               </td>
               <td>
                 <Menu trigger={<MenuButton>{workflows.find(w => w.id === job.workflow)?.name || 'Unknown Workflow'}</MenuButton>}>
