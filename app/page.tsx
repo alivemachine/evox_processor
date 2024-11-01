@@ -159,7 +159,7 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
       </tr>
     </thead>
     <tbody>
-      {jobs
+      {filteredJobs
         .sort((a, b) => {
           if (a.vifid !== b.vifid) {
             return a.vifid > b.vifid ? 1 : -1;
