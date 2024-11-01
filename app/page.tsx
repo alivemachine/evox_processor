@@ -84,14 +84,12 @@ export default function App() {
   function createJob(vifid: string | null = null, color: string | null = null, angle: string | null = null) {
     let body: string | null = null;
     let trim: string | null = null;
-    console.log(vifid, color, angle);
     if (vifid === null) {
       vifid = window.prompt("VIF #", "00000");
       body = window.prompt("Body", "Toyota");
       trim = window.prompt("Trim","Rav4 SUV");
     }
     if (vifid === null) { return; }
-    console.log(vifid, color, angle);
     if (color === null) {
       color = window.prompt("Color", "silver grey");
     }
@@ -99,7 +97,6 @@ export default function App() {
     if (angle === null) {
       angle = angleOptions[0];
     }
-    console.log(vifid, color, angle);
     client.models.Job.create({
       id: vifid + "_" + color.replace(/[^a-zA-Z0-9]/g, '') + "_"+angle,
       vifid: vifid,
@@ -108,7 +105,9 @@ export default function App() {
       color: color,
       angle: angle
     });
-    console.log(vifid, color, angle);
+    if(selectedJob!=='all'||selectedJob!==vifid){
+      setSelectedJob(vifid);
+    }
   }
   function removeJob(id: string) {
     client.models.Job.delete({ id: id });
@@ -132,9 +131,6 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
     <tbody>
       <tr>
         <td>
-          <button onClick={() => createJob()}>+ new</button>
-        </td>
-        <td>
           <Menu trigger={<MenuButton>{selectedJob}</MenuButton>}>
             <MenuItem onClick={() => setSelectedJob('all')}>All</MenuItem>
             {Array.from(new Set(jobs.map(job => job.vifid))).map(vifid => (
@@ -142,6 +138,7 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
                 {vifid}
               </MenuItem>
             ))}
+            <MenuItem onClick={() => createJob()}>+ new</MenuItem>
           </Menu>
         </td>
       </tr>
