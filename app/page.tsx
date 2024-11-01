@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, SetStateAction } from "react";
 import { generateClient } from "aws-amplify/data";
 import { StorageImage } from '@aws-amplify/ui-react-storage';
 import { Menu, MenuItem, View, MenuButton } from '@aws-amplify/ui-react';
@@ -38,6 +38,9 @@ export default function App() {
   const [jobs, setJobs] = useState<Array<Schema["Job"]["type"]>>([]);
   const [generatedData, setGeneratedData] = useState<Record<string, any[]>>({});
   const [workflows, setWorkflows] =  useState<Array<Schema["Workflow"]["type"]>>([]);
+  const [selectedJob, setSelectedJob] = useState(() => {
+    return localStorage.getItem('selectedJob') || 'all';
+  });
 
   async function listWorkflows() {
     try {
@@ -77,7 +80,8 @@ export default function App() {
   useEffect(() => {
     listJobs();
     listWorkflows();
-  }, []);
+    localStorage.setItem('selectedJob', selectedJob);
+  }, [selectedJob]);
 
   function createJob(vifid: string | null = null, color: string | null = null, angle: string | null = null) {
     let body: string | null = null;
@@ -120,11 +124,20 @@ export default function App() {
     const { data: updatedJob, errors } = await client.models.Job.update(job);
 }
 
+const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid === selectedJob);
 
 //The queue table is designed to sort the data in the database by vifid, color and angle and then merge the relevant rows by column.
   return (
 <main>
   <h1>Jobs</h1>
+  <Menu trigger={<MenuButton>{selectedJob}</MenuButton>}>
+  <MenuItem onClick={() => setSelectedJob('all')}>All</MenuItem>
+        {jobs.map(job => (
+          <MenuItem key={job.vifid} onClick={() => setSelectedJob(job.vifid)}>
+            {job.vifid}
+          </MenuItem>
+          ))}
+  </Menu>
     <button onClick={() => createJob()}>+ new</button>
    <table>
     <thead>
@@ -135,6 +148,7 @@ export default function App() {
         <th>Trim</th>
         <th></th>
         <th>Color</th>
+        <th></th>
         <th>Angle</th>
         <th>Image</th>
         <th>Generated</th>
