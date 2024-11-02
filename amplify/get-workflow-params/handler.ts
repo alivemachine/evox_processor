@@ -4,12 +4,14 @@ import { generateClient } from 'aws-amplify/data';
 import type { Schema } from "./../data/resource"
 
 import { Amplify } from "aws-amplify";
-import outputs from "./../../amplify_outputs.json";
+import outputs from "./../amplify_outputs.json";
 Amplify.configure(outputs);
 
 export const handler: Schema["getWorkflowParams"]["functionHandler"] = async (event) => {
     
-    const client = generateClient<Schema>();
+    const client = generateClient<Schema>({
+        authMode: 'apiKey',
+      });
 
     const { name } = event.arguments
     // Access Workflows
