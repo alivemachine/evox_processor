@@ -6,9 +6,9 @@ import { Cache } from 'aws-amplify/utils';
 import { StorageImage } from '@aws-amplify/ui-react-storage';
 import { Menu, MenuItem, View, MenuButton, Divider } from '@aws-amplify/ui-react';
 import { list } from 'aws-amplify/storage';
-import type { Schema } from "@/amplify/data/resource";
 import "./../app/app.css";
 import { Amplify } from "aws-amplify";
+import type { Schema } from "@/amplify/data/resource";
 import outputs from "@/amplify_outputs.json";
 import "@aws-amplify/ui-react/styles.css";
 

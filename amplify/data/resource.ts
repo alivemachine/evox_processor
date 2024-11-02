@@ -60,9 +60,18 @@ const schema = a.schema({
       name: a.string(),
     })
     .returns(a.json())
-    .handler(a.handler.function(getWorkflowParams).async()),
+    .handler(a.handler.function(getWorkflowParams)),
+
+    //async don't return anything
+    //runWorkflow: a
+    //.query()
+    //.arguments({
+    //  name: a.string(),
+    //})
+    //.handler(a.handler.function(runWorkflow).async()),
   })
-  .authorization((allow) => [allow.publicApiKey()]);
+  
+
 
 export type Schema = ClientSchema<typeof schema>;
 
