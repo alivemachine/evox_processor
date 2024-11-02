@@ -1,6 +1,6 @@
 import { type ClientSchema, a, defineData } from '@aws-amplify/backend';
 import { getWorkflowParams } from "../get-workflow-params/resource"
-
+import { runWorkflow } from "../run-workflow/resource"
 const angleOptions = [
   "spin0", 
   "spin20", 
@@ -63,12 +63,12 @@ const schema = a.schema({
     .handler(a.handler.function(getWorkflowParams)),
 
     //async don't return anything
-    //runWorkflow: a
-    //.query()
-    //.arguments({
-    //  name: a.string(),
-    //})
-    //.handler(a.handler.function(runWorkflow).async()),
+    runWorkflow: a
+    .query()
+    .arguments({
+      name: a.string(),
+    })
+    .handler(a.handler.function(runWorkflow).async()),
   })
   
 

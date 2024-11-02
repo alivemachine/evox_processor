@@ -7,7 +7,7 @@ import outputs from "@/amplify_outputs.json";
 Amplify.configure(outputs);
 
 
-export const handler: Schema["getWorkflowParams"]["functionHandler"] = async (event) => {
+export const handler: Schema["runWorkflow"]["functionHandler"] = async (event) => {
     
     const client = generateClient<Schema>();
 
@@ -19,6 +19,4 @@ export const handler: Schema["getWorkflowParams"]["functionHandler"] = async (ev
     // Access Jobs
     const jobsResult = await client.models.Job.list();
     const jobs = jobsResult.data;
-
-    return {response:`Hello, ${name}_${workflows[0].id}_${jobs[0].vifid}!`}
 }
