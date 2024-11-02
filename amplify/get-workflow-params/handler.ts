@@ -1,6 +1,10 @@
 import type { Schema } from "./../data/resource"
 import { generateClient } from 'aws-amplify/data';
+import { Amplify } from "aws-amplify";
+import outputs from "@/amplify_outputs.json";
 
+
+Amplify.configure(outputs);
 
 
 export const handler: Schema["getWorkflowParams"]["functionHandler"] = async (event) => {
