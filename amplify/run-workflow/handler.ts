@@ -1,11 +1,10 @@
 
+import { Amplify } from "aws-amplify";
 import { generateClient } from 'aws-amplify/data';
 import type { Schema } from "./../data/resource"
 
-import { Amplify } from "aws-amplify";
-import outputs from "../amplify_outputs.json";
-Amplify.configure(outputs);
 
+Amplify.getConfig()
 export const handler: Schema["runWorkflow"]["functionHandler"] = async (event) => {
     
     const client = generateClient<Schema>({
