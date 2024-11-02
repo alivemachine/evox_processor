@@ -1,5 +1,5 @@
 import type { Schema } from "./../data/resource"
-import { generateClient } from "./../data";
+import { generateClient } from 'aws-amplify/data';
 
 
 
