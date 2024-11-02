@@ -59,8 +59,8 @@ const schema = a.schema({
     .arguments({
       name: a.string(),
     })
-    .returns(a.string())
-    .handler(a.handler.function(getWorkflowParams)),
+    .returns(a.json())
+    .handler(a.handler.function(getWorkflowParams).async()),
   })
   .authorization((allow) => [allow.publicApiKey()]);
 
