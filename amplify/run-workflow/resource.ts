@@ -1,6 +1,6 @@
 import { defineFunction } from "@aws-amplify/backend";
     
-export const getWorkflowParams = defineFunction({
+export const runWorkflow = defineFunction({
   name: "run-workflow",
   entry: "./handler.ts"
 });
