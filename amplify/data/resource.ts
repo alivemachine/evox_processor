@@ -60,14 +60,16 @@ const schema = a.schema({
       name: a.string(),
     })
     .returns(a.json())
+    .authorization((allow) => [allow.publicApiKey()])
     .handler(a.handler.function(getWorkflowParams)),
-
+    
     //async don't return anything
     runWorkflow: a
     .query()
     .arguments({
       name: a.string(),
     })
+    .authorization((allow) => [allow.publicApiKey()])
     .handler(a.handler.function(runWorkflow).async()),
   })
   
