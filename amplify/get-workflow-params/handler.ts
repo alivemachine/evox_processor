@@ -1,7 +1,7 @@
 import type { Schema } from "./../data/resource"
 import { generateClient } from 'aws-amplify/data';
 import { Amplify } from "aws-amplify";
-import outputs from "./amplify_outputs.json";
+import outputs from "amplify_outputs.json";
 
 
 Amplify.configure(outputs);
@@ -20,5 +20,5 @@ export const handler: Schema["getWorkflowParams"]["functionHandler"] = async (ev
     const jobsResult = await client.models.Job.list();
     const jobs = jobsResult.data;
 
-    return `Hello, ${name}_${workflows[0].id}_${jobs[0].vifid}!`
+    return {"response":`Hello, ${name}_${workflows[0].id}_${jobs[0].vifid}!`}
 }
