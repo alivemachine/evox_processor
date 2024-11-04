@@ -55,18 +55,15 @@ export default function App() {
 
 
   async function listWorkflows() {
-    console.log('list owrkflows');
     try {
       const result = await client.models.Workflow.list();
       setWorkflows(result.data);
       console.log(result);
-      console.log(result.data);
     } catch (error) {
       console.error('Error fetching workflows:', error);
     }
   }
   function listJobs() {
-    console.log('listJobs');
     client.models.Job.observeQuery().subscribe({
       next: async (data) => {
         let jobsData = data.items;
@@ -146,8 +143,8 @@ export default function App() {
           const key = node._meta.title.replace("in--", "");
           const inputsEntries = Object.entries(node.inputs);
           let value = inputsEntries.length > 0 ? inputsEntries[0][1] : null;
-          if (job[key]) {
-              value = job[key];
+          if (key in job) {
+              value = job[key as keyof typeof job];
           }
           if (key === "positive_prompt") {
               value = job.color + " " + job.body + " " + job.trim + " " + value;
