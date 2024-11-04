@@ -80,7 +80,7 @@ export default function App() {
       return { items: [] };
     }
   }
-  async function listJobs() {
+  async function listJobs(): Promise<Array<Schema["Job"]["type"]>> {
     return new Promise((resolve) => {
       client.models.Job.observeQuery().subscribe({
         next: async (data) => {
@@ -92,7 +92,7 @@ export default function App() {
     });
   }
   async function getDatabaseData() {
-    let jobsData = await listJobs(); // Wait for the jobs data
+    let jobsData: Array<Schema["Job"]["type"]> = await listJobs();
 
     console.log(jobsData);
         const newGeneratedData: Record<string, any[]> = {}; 
