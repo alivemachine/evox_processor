@@ -10,7 +10,7 @@ import { Menu, MenuItem, View, MenuButton, Divider,TextField ,TextAreaField,Slid
   Text,
   Image,
   Loader,
-  Icon, } from '@aws-amplify/ui-react';
+  Icon } from '@aws-amplify/ui-react';
 import { list } from 'aws-amplify/storage';
 import "./../app/app.css";
 import { Amplify } from "aws-amplify";
@@ -50,55 +50,74 @@ export default function App() {
   const [stylemapsData, setStylemapsData] = useState<Record<string, any[]>>({});
   const [lorasData, setLorasData] = useState<Record<string, any[]>>({});
   const [workflows, setWorkflows] =  useState<Array<Schema["Workflow"]["type"]>>([]);
-  const [selectedJob, setSelectedJob] = useState(jobs.length > 0 ? jobs[0].vifid : 'all');
+  const [selectedJob, setSelectedJob] = useState('all');
   const [uploadPath, setUploadPath] = useState('colormaps');
-  
+
 
   async function listWorkflows() {
+    console.log('list owrkflows');
     try {
       const result = await client.models.Workflow.list();
       setWorkflows(result.data);
-      
+      console.log(result);
+      console.log(result.data);
     } catch (error) {
       console.error('Error fetching workflows:', error);
     }
   }
   function listJobs() {
+    console.log('listJobs');
     client.models.Job.observeQuery().subscribe({
       next: async (data) => {
-        const jobsData = data.items;
+        let jobsData = data.items;
         setJobs([...jobsData]);
-
+        //setSelectedJob(jobsData[0].vifid);
         const newGeneratedData: Record<string, any[]> = {}; 
         const newColormapsData: Record<string, any[]> = {};
         const newDepthmapsData: Record<string, any[]> = {};
         const newStylemapsData: Record<string, any[]> = {};
         const newLorasData: Record<string, any[]> = {};
-
+        
+        // Remove jobs with identical vifid
+        const uniqueJobs = new Map();
+        jobsData.forEach(job => {
+          uniqueJobs.set(job.vifid, job);
+        });
+        jobsData = Array.from(uniqueJobs.values());
         for (const job of jobsData) {
-          const imageItems = await getImages(job.vifid,'generated');
+          const imageItems = await getFiles(job.vifid,'generated');
           newGeneratedData[job.vifid] = imageItems.items;
-          const colormapsItems = await getImages(job.vifid,'colormaps');
+          const colormapsItems = await getFiles(job.vifid,'colormaps');
           newColormapsData[job.vifid] = colormapsItems.items;
-          const depthmapsItems = await getImages(job.vifid,'depthmaps');
+          const depthmapsItems = await getFiles(job.vifid,'depthmaps');
           newDepthmapsData[job.vifid] = depthmapsItems.items;
-          const stylemapsItems = await getImages(job.vifid,'stylemaps');
+          const stylemapsItems = await getFiles(job.vifid,'stylemaps');
           newStylemapsData[job.vifid] = stylemapsItems.items;
-          const lorasItems = await getImages(job.vifid,'loras');
+          const lorasItems = await getFiles('loras','loras');
           newLorasData[job.vifid] = lorasItems.items;
+          
+          console.log(jobsData.length);
         }
         setGeneratedData(newGeneratedData);
         setColormapsData(newColormapsData);
         setDepthmapsData(newDepthmapsData);
         setStylemapsData(newStylemapsData);
+        setLorasData(newLorasData);
       },
     });
+    console.log('finished listing jobs');
   }
   
-  async function getImages(vifid: string, folder: string) {
+  async function getFiles(vifid: string, folder: string) {
+    let path = `vehicles/${vifid}/${folder}/`;
+    console.log('getFiles', path);
+    return {items:[]};
+    if(folder==='loras'){
+      path= `loras`;
+    }
     try {
       const result = await list({
-        path: `vehicles/${vifid}/${folder}/`,
+        path: path,
       });
       return result;
     } catch (error) {
@@ -106,6 +125,7 @@ export default function App() {
       return { items: [] };
     }
   }
+  
   useEffect(() => {
     listJobs();
     listWorkflows();
@@ -116,7 +136,7 @@ export default function App() {
       const job = jobs.find((job) => job.id === jobid);
       if (!workflow) { return {}; }
       if (!job) { throw new Error("Job not found"); }
-      const workflowJson = JSON.parse(workflow.json);
+      const workflowJson = JSON.parse(typeof workflow.json === 'string' ? workflow.json : '{}');
       const nodes = Object.values(workflowJson);
       const inputNodes = nodes.filter((node: any) => node._meta.title.startsWith("in--"));
       
@@ -295,7 +315,7 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
                   <td rowSpan={rowSpan}>
                  
       <FileUploader
-      acceptedFileTypes={['image/*']}
+      acceptedFileTypes={uploadPath === 'loras' ? ['.safetensors'] : ['image/*']}
       path={uploadPath === 'loras' ? `loras/` : `vehicles/${job.vifid}/${uploadPath}/`}
 
       maxFileCount={100}
@@ -393,7 +413,7 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
                                   {typeof value === 'string' && (value.includes('.png') || value.includes('.jpg')) ? (
                                     //display only image from vehicle/job.vifid/[key]/[angle].png folder
                                     <StorageImage alt={value} path={value} />
-
+                                    
                                   ) : key === 'lora' ? (
                                     //look for loras in lorasData and select the latest one
                                     "no lora"
