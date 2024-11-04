@@ -3,7 +3,6 @@ body {
     background: linear-gradient(180deg, rgb(117, 81, 194), rgb(255, 255, 255));
     display: flex;
     font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-    height: 100vh;
     width: 100vw;
     justify-content: center;
     align-items: center;
@@ -13,8 +12,11 @@ body {
     display: flex;
     flex-direction: column;
     align-items: stretch;
+    top:0;
   }
-  
+  #queue-table{
+
+  }
   button {
     border-radius: 8px;
     border: 1px solid transparent;
@@ -62,4 +64,30 @@ body {
   a {
     font-weight: 800;
     text-decoration: none;
+  }
+
+  .workflow-param-cell {
+    max-width:200px;
+    min-width:100px;
+    margin:1px;
+    border-radius: 10px;
+  }
+  .workflow-params-cell {
+    max-width:40vw;
+    overflow-x: auto;
+  }
+  .amplify-button img{
+    max-width: 200px;
+    max-height: 200px;
+  }
+ .amplify-button.imgbtn{
+    padding:0;
+    margin:0;
+  }
+
+  .amplify-textarea{
+    overflow-x: hidden;
+  }
+  .amplify-fileuploader {
+    max-height:80px;
   }
