@@ -66,9 +66,8 @@ export default function App() {
   
   async function getFiles(vifid: string, folder: string) {
     let path = `vehicles/${vifid}/${folder}/`;
-    console.log('getFiles', path);
     if(folder==='loras'){
-      path= `loras`;
+      path= `loras/`;
     }
     try {
       const result = await list({
@@ -116,12 +115,10 @@ export default function App() {
           newDepthmapsData[job.vifid] = depthmapsItems.items;
           const stylemapsItems = await getFiles(job.vifid,'stylemaps');
           newStylemapsData[job.vifid] = stylemapsItems.items;
-          const lorasItems = await getFiles('loras','loras');
-          newLorasData[job.vifid] = lorasItems.items;
-          
-          
         }
-        console.log(generatedData);
+        const lorasItems = await getFiles('loras','loras');
+        newLorasData['loras'] = lorasItems.items; // Assign the files to a key in the object
+        console.log(lorasItems);
         setGeneratedData(newGeneratedData);
         setColormapsData(newColormapsData);
         setDepthmapsData(newDepthmapsData);
@@ -144,6 +141,12 @@ export default function App() {
       const nodes = Object.values(workflowJson);
       const inputNodes = nodes.filter((node: any) => node._meta.title.startsWith("in--"));
       
+      //flux or sdxl
+      //figure out how many flux or sdxl is included in workflow json in string format
+      const fluxCount = workflow.json.toLowerCase().match(/"flux"/g)?.length || 0;
+      const sdxlCount = workflow.json.toLowerCase().match(/"sdxl"/g)?.length || 0;
+      const diffuserType = fluxCount > sdxlCount ? 'flux' : 'sdxl';
+
       // Accumulate key-value pairs in a single object
       const inputNodesObject: { [key: string]: any } = {};
       inputNodes.forEach((node: any) => {
@@ -174,7 +177,11 @@ export default function App() {
           if(key === "stylemap") {
             value=`vehicles/${job.vifid}/stylemaps/style_${padNumber(String(job.angle).replace('spin',''))}.png`;
           }
-
+          if(key === "lora") {
+            //choose the file which name includes job.vifid and `diffuserType
+            console.log(lorasData);
+            value=`${lorasData['loras']?.find(lora => lora.path.includes(job.vifid) && lora.path.includes(diffuserType))?.path || ''}`;
+          }
           inputNodesObject[key] = value;
       });
       return inputNodesObject;
@@ -183,12 +190,25 @@ export default function App() {
   function createJob(vifid: string | null = null, color: string | null = null, angle: string | null = null) {
     let body: string | null = null;
     let trim: string | null = null;
+    //totally new, prompt for everything
     if (vifid === null) {
       vifid = window.prompt("VIF #", "00000");
-      body = window.prompt("Body", "Toyota");
-      trim = window.prompt("Trim","Rav4 SUV");
+    
+      if(body === null){
+        body = window.prompt("Body", "Toyota");
+      }if (body === null) { return; }
+      if(trim === null){
+        trim = window.prompt("Trim", "RAV4");
+      }if (trim === null) { return; }
+    }if (vifid === null) { return; }
+    //semi-new, complete missing values with the last job's values
+    if(body===null){
+      body = jobs.find((job) => job.vifid === vifid)?.body || "Toyota";
     }
-    if (vifid === null) { return; }
+    if(trim===null){
+      trim = jobs.find((job) => job.vifid === vifid)?.trim || "RAV4";
+    
+    }
     if (color === null) {
       color = window.prompt("Color", "silver grey");
     }
@@ -267,8 +287,8 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
             <MenuItem onClick={() => setSelectedJob('all')}>All</MenuItem>
             {Array.from(new Set(jobs.map(job => job.vifid))).map(vifid => (
               <MenuItem key={vifid} onClick={() => setSelectedJob(vifid)}>
-                {vifid}
-              </MenuItem>
+                {vifid + (jobs.find(job => job.vifid === vifid)?.body || jobs.find(job => job.vifid === vifid)?.trim ? " | " + (jobs.find(job => job.vifid === vifid)?.body || '') + " " + (jobs.find(job => job.vifid === vifid)?.trim || '') : '')}
+                </MenuItem>
             ))}
             <Divider />
             <MenuItem onClick={() => createJob()}>+ new</MenuItem>
@@ -419,8 +439,14 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
                                     <StorageImage alt={value} path={value} />
                                     
                                   ) : key === 'lora' ? (
-                                    //look for loras in lorasData and select the latest one
-                                    "no lora"
+                                    //make a menu from the lorasData to pick the lora file
+                                    <Menu trigger={<MenuButton>{value ? value : 'no lora'}</MenuButton>}>                                      
+                                    {Object.values(lorasData).flat().map((lora, idx) => (
+                                        <MenuItem key={idx}>
+                                          {lora.path}
+                                        </MenuItem>
+                                      ))}
+                                    </Menu>
                                   ) : key.includes('prompt') ? (
                                     <TextAreaField
                                       label={key}
