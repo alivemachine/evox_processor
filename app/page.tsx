@@ -63,12 +63,38 @@ export default function App() {
       console.error('Error fetching workflows:', error);
     }
   }
-  function listJobs() {
-    client.models.Job.observeQuery().subscribe({
-      next: async (data) => {
-        let jobsData = data.items;
-        setJobs([...jobsData]);
-        //setSelectedJob(jobsData[0].vifid);
+  
+  async function getFiles(vifid: string, folder: string) {
+    let path = `vehicles/${vifid}/${folder}/`;
+    console.log('getFiles', path);
+    if(folder==='loras'){
+      path= `loras`;
+    }
+    try {
+      const result = await list({
+        path: path,
+      });
+      return result;
+    } catch (error) {
+      console.error(`Error fetching generated images for vifid ${vifid}:`, error);
+      return { items: [] };
+    }
+  }
+  async function listJobs() {
+    return new Promise((resolve) => {
+      client.models.Job.observeQuery().subscribe({
+        next: async (data) => {
+          let jobsData = data.items;
+          setJobs([...jobsData]);
+          resolve(jobsData);
+        },
+      });
+    });
+  }
+  async function getDatabaseData() {
+    let jobsData = await listJobs(); // Wait for the jobs data
+
+    console.log(jobsData);
         const newGeneratedData: Record<string, any[]> = {}; 
         const newColormapsData: Record<string, any[]> = {};
         const newDepthmapsData: Record<string, any[]> = {};
@@ -93,40 +119,21 @@ export default function App() {
           const lorasItems = await getFiles('loras','loras');
           newLorasData[job.vifid] = lorasItems.items;
           
-          console.log(jobsData.length);
+          
         }
+        console.log(generatedData);
         setGeneratedData(newGeneratedData);
         setColormapsData(newColormapsData);
         setDepthmapsData(newDepthmapsData);
         setStylemapsData(newStylemapsData);
         setLorasData(newLorasData);
-      },
-    });
-    console.log('finished listing jobs');
-  }
-  
-  async function getFiles(vifid: string, folder: string) {
-    let path = `vehicles/${vifid}/${folder}/`;
-    console.log('getFiles', path);
-    return {items:[]};
-    if(folder==='loras'){
-      path= `loras`;
-    }
-    try {
-      const result = await list({
-        path: path,
-      });
-      return result;
-    } catch (error) {
-      console.error(`Error fetching generated images for vifid ${vifid}:`, error);
-      return { items: [] };
-    }
-  }
-  
+      }
   useEffect(() => {
-    listJobs();
-    listWorkflows();
-  }, []);
+    (async () => {
+      await getDatabaseData(); 
+        await listWorkflows();
+    })();
+}, []);
 
     function getWorkflowParams(jobid: string, workflowid: string) {
       const workflow = workflows.find((workflow) => workflow.id === workflowid);
