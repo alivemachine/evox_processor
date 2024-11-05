@@ -91,3 +91,7 @@ body {
   .amplify-fileuploader {
     max-height:80px;
   }
+  .amplify-buttongroup.amplify-menu__content{
+    max-height:40vh;
+    overflow:auto;
+  }

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, SetStateAction } from "react";
 import { generateClient } from "aws-amplify/data";
+import { ApiError, post } from 'aws-amplify/api';
 import { Cache } from 'aws-amplify/utils';
 import { StorageImage,FileUploader} from '@aws-amplify/ui-react-storage';
 import { Menu, MenuItem, View, MenuButton, Divider,TextField ,TextAreaField,SliderField, Card,
@@ -11,13 +12,12 @@ import { Menu, MenuItem, View, MenuButton, Divider,TextField ,TextAreaField,Slid
   Image,
   Loader,
   Icon } from '@aws-amplify/ui-react';
-import { list } from 'aws-amplify/storage';
+import { list,getUrl } from 'aws-amplify/storage';
 import "./../app/app.css";
 import { Amplify } from "aws-amplify";
 import type { Schema } from "@/amplify/data/resource";
 import outputs from "@/amplify_outputs.json";
 import "@aws-amplify/ui-react/styles.css";
-import { get } from "http";
 
 Amplify.configure(outputs);
 
@@ -52,7 +52,26 @@ export default function App() {
   const [workflows, setWorkflows] =  useState<Array<Schema["Workflow"]["type"]>>([]);
   const [selectedJob, setSelectedJob] = useState('all');
   const [uploadPath, setUploadPath] = useState('colormaps');
+  const [evoxImagesList, setEvoxImagesList] = useState([]);
 
+  async function listEvoxVehicles() {
+    const response = await fetch('https://api.evoximages.com/api/v1/vehicles?&pid=9&ptid=595&color_code=GXD&api_key=e3LjTFAQEG4MuaDYzZt8kmgqnysC72UX');
+    const result = await response.json();
+  
+    if (result.statusCode === 200) {
+      const filteredData = result.data.filter((vehicle: any) => vehicle.urls && vehicle.urls.length > 0)
+                                      .filter((vehicle: any) => JSON.stringify(vehicle).includes("GXD"))
+                                      .map((vehicle: any) => {
+                                        vehicle.urls = vehicle.urls.filter((url: string) => url.includes("GXD"));
+                                        return vehicle;
+                                      });
+
+      console.log(filteredData);
+      setEvoxImagesList(filteredData);
+    } else {
+      throw new Error('Failed to fetch vehicles');
+    }
+  }
 
   async function listWorkflows() {
     try {
@@ -127,65 +146,14 @@ export default function App() {
       }
   useEffect(() => {
     (async () => {
+      listEvoxVehicles();
       await getDatabaseData(); 
         await listWorkflows();
     })();
 }, []);
 
-    function getWorkflowParams(jobid: string, workflowid: string) {
-      const workflow = workflows.find((workflow) => workflow.id === workflowid);
-      const job = jobs.find((job) => job.id === jobid);
-      if (!workflow) { return {}; }
-      if (!job) { throw new Error("Job not found"); }
-      const workflowJson = JSON.parse(typeof workflow.json === 'string' ? workflow.json : '{}');
-      const nodes = Object.values(workflowJson);
-      const inputNodes = nodes.filter((node: any) => node._meta.title.startsWith("in--"));
-      
-      //flux or sdxl
-      //figure out how many flux or sdxl is included in workflow json in string format
-      const fluxCount = workflow.json.toLowerCase().match(/"flux"/g)?.length || 0;
-      const sdxlCount = workflow.json.toLowerCase().match(/"sdxl"/g)?.length || 0;
-      const diffuserType = fluxCount > sdxlCount ? 'flux' : 'sdxl';
+    
 
-      // Accumulate key-value pairs in a single object
-      const inputNodesObject: { [key: string]: any } = {};
-      inputNodes.forEach((node: any) => {
-          const key = node._meta.title.replace("in--", "");
-          const inputsEntries = Object.entries(node.inputs);
-          let value = inputsEntries.length > 0 ? inputsEntries[0][1] : null;
-          if (key in job) {
-              value = job[key as keyof typeof job];
-          }
-          if (key === "positive_prompt") {
-              value = job.color + " " + job.body + " " + job.trim + " " + value;
-          }
-          //if key exist in job.workflow_params then use its value
-          if (job.workflow_params) {
-              const workflowParams = JSON.parse(job.workflow_params);
-              if (workflowParams[key]) {
-                  value = workflowParams[key];
-              }
-          }
-          //if key === colormaps or depthmaps or stylemaps then use the latest image from the folder
-          const padNumber = (num) => String(num).padStart(3, '0');
-          if (key === "colormap"){
-            value=`vehicles/${job.vifid}/colormaps/color_${padNumber(String(job.angle).replace('spin',''))}.png`;
-          }
-          if(key === "depthmap"){
-            value=`vehicles/${job.vifid}/depthmaps/depth_${padNumber(String(job.angle).replace('spin',''))}.png`;
-          }
-          if(key === "stylemap") {
-            value=`vehicles/${job.vifid}/stylemaps/style_${padNumber(String(job.angle).replace('spin',''))}.png`;
-          }
-          if(key === "lora") {
-            //choose the file which name includes job.vifid and `diffuserType
-            console.log(lorasData);
-            value=`${lorasData['loras']?.find(lora => lora.path.includes(job.vifid) && lora.path.includes(diffuserType))?.path || ''}`;
-          }
-          inputNodesObject[key] = value;
-      });
-      return inputNodesObject;
-  }
 
   function createJob(vifid: string | null = null, color: string | null = null, angle: string | null = null) {
     let body: string | null = null;
@@ -231,9 +199,234 @@ export default function App() {
   function removeJob(id: string) {
     client.models.Job.delete({ id: id });
   }
-  function runJob(id: string) {
-    alert('runJob');
+  function getWorkflowParams(jobid: string, workflowid: string) {
+    const workflow = workflows.find((workflow) => workflow.id === workflowid);
+    const job = jobs.find((job) => job.id === jobid);
+    if (!workflow) { return {}; }
+    if (!job) { throw new Error("Job not found"); }
+    const workflowJson = JSON.parse(typeof workflow.json === 'string' ? workflow.json : '{}');
+    const nodes = Object.values(workflowJson);
+    const inputNodes = nodes.filter((node: any) => node._meta.title.startsWith("in--"));
+    
+    //flux or sdxl
+    //figure out how many flux or sdxl is included in workflow json in string format
+    const fluxCount = (workflow.json as string).toLowerCase().match(/"flux"/g)?.length || 0;
+    const sdxlCount = (workflow.json as string).toLowerCase().match(/"sdxl"/g)?.length || 0;
+    const diffuserType = fluxCount > sdxlCount ? 'flux' : 'sdxl';
+
+    // Accumulate key-value pairs in a single object
+    const inputNodesObject: { [key: string]: any } = {};
+    inputNodes.forEach((node: any) => {
+        const key = node._meta.title.replace("in--", "");
+        const inputsEntries = Object.entries(node.inputs);
+        let value = inputsEntries.length > 0 ? inputsEntries[0][1] : null;
+        if (key in job) {
+            value = job[key as keyof typeof job];
+        }
+        if (key === "positive_prompt") {
+            value = job.color + " " + job.body + " " + job.trim + " " + value;
+        }
+        //if key exist in job.workflow_params then use its value
+        if (job.workflow_params) {
+            const workflowParams = JSON.parse(job.workflow_params);
+            if (workflowParams[key]) {
+                value = workflowParams[key];
+            }
+        }
+        //if key === colormaps or depthmaps or stylemaps then use the latest image from the folder
+        const padNumber = (num) => String(num).padStart(3, '0');
+        if (key === "colormap"){
+          value=`vehicles/${job.vifid}/colormaps/color_${padNumber(String(job.angle).replace('spin',''))}.png`;
+        }
+        if(key === "depthmap"){
+          value=`vehicles/${job.vifid}/depthmaps/depth_${padNumber(String(job.angle).replace('spin',''))}.png`;
+        }
+        if(key === "stylemap"&&value==='') {
+          //value=`vehicles/${job.vifid}/stylemaps/style_${padNumber(String(job.angle).replace('spin',''))}.png`;
+        }
+        if(key === "lora") {
+          //choose the file which name includes job.vifid and `diffuserType
+          value=`${lorasData['loras']?.find(lora => lora.path.includes(job.vifid) && lora.path.includes(diffuserType))?.path || ''}`;
+        }
+        inputNodesObject[key] = value;
+    });
+    return inputNodesObject;
+}
+async function convertToBase64(imagePath: string, maxSize?: number): Promise<string> {
+  // Helper function to fetch image as a Blob
+  async function fetchImage(url: string): Promise<Blob> {
+      const response = await fetch(url);
+      if (!response.ok) {
+          throw new Error(`Failed to fetch image: ${response.statusText}`);
+      }
+      return await response.blob();
   }
+
+  // Helper function to resize image
+  function resizeImage(imageBlob: Blob, maxSize: number): Promise<string> {
+      return new Promise((resolve, reject) => {
+          const img = new window.Image();
+          img.onload = () => {
+              const canvas = document.createElement('canvas');
+              const ctx = canvas.getContext('2d');
+              if (!ctx) {
+                  reject(new Error('Failed to get canvas context'));
+                  return;
+              }
+
+              let { width, height } = img;
+              if (width > maxSize || height > maxSize) {
+                  if (width > height) {
+                      height = Math.round((height * maxSize) / width);
+                      width = maxSize;
+                  } else {
+                      width = Math.round((width * maxSize) / height);
+                      height = maxSize;
+                  }
+              }
+
+              canvas.width = width;
+              canvas.height = height;
+              ctx.drawImage(img, 0, 0, width, height);
+              resolve(canvas.toDataURL('image/png'));
+          };
+          img.onerror = reject;
+          img.src = URL.createObjectURL(imageBlob);
+      });
+  }
+
+  // Determine if the path is an AWS Amplify storage path or a URL
+  const isURLPath = imagePath.startsWith('http');
+  let imageBlob: Blob;
+
+  if (!isURLPath) {
+      // Handle AWS Amplify storage path
+      
+      const linkToStorageFile = await getUrl({
+        path: imagePath,
+      });
+      imageBlob = await fetchImage(String(linkToStorageFile.url));
+  } else {
+      // Handle URL
+      imageBlob = await fetchImage(imagePath);
+  }
+
+  // Resize image if maxSize is provided, otherwise convert directly to base64
+  if (maxSize) {
+      return await resizeImage(imageBlob, maxSize);
+  } else {
+      return new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result as string);
+          reader.onerror = reject;
+          reader.readAsDataURL(imageBlob);
+      });
+  }
+}
+  async function runJob(jobid: string, workflowid: string) {
+    const workflow = workflows.find((workflow) => workflow.id === workflowid);
+    const job = jobs.find((job) => job.id === jobid);
+    if (!workflow) { alert(`no workflow`); return {}; }
+    if (!job) { throw new Error("Job not found"); }
+
+    const headers = {
+      'Authorization': 'Bearer 3SNAT5RZD91RWASMYJ1CONECPKKHZQAGCLOARIGJ',
+      'Content-Type': 'application/json'
+    };
+    const workflowJson = JSON.parse(typeof workflow.json === 'string' ? workflow.json : '{}');
+    const workflowParams = getWorkflowParams(jobid, workflowid);
+
+    // Iterate over the keys of workflowJson and update the nodes
+    Object.keys(workflowJson).forEach((key) => {
+        const node = workflowJson[key];
+        if (node._meta && node._meta.title.startsWith("in--")) {
+            const paramKey = node._meta.title.replace("in--", "");
+            if (paramKey in workflowParams) {
+                node.inputs[0] = workflowParams[paramKey];
+            }
+        }
+    });
+    // Check if any of the value in workflowParams is an image
+    const imageKeys = Object.keys(workflowParams).filter(key => 
+      workflowParams[key].endsWith('.png') || 
+      workflowParams[key].endsWith('.jpg') || 
+      workflowParams[key].endsWith('.jpeg')
+    );
+
+    const imageArray = await Promise.all(imageKeys.map(async key => {
+      const imagePath = workflowParams[key];
+      const base64String = (await convertToBase64(imagePath, 1024)).replace('data:image/png;base64,',''); // Assuming maxSize is 1024
+      return {
+          name: key,
+          image: base64String
+      };
+    }));
+    imageArray.forEach(imageObj => {
+      const newWindow = window.open();
+      if (newWindow) {
+          newWindow.document.write(`<img src="${'data:image/png;base64,'+imageObj.image}" alt="${imageObj.name}" />`);
+      }
+  });
+
+    // create the images object and add it to the data object
+    const data = {
+        "input": {
+          "workflow": workflowJson,
+          images: imageArray,
+          file_name: `${job.vifid}/generated/${job.color?.replace(/[^a-zA-Z]/g, '')}_${job.angle?.replace(/[^a-zA-Z]/g, '')}`,    
+        }};
+        console.log(data);
+
+    try {
+      const initialResponse = await fetch(`https://api.runpod.ai/v2/aphuaj3mbhzzbw/run`, {
+        method: 'POST',
+        headers: headers,
+        body: JSON.stringify(data)
+      });
+        
+      let initialResponseData = await initialResponse.json();
+         // Save the status response in the database
+         console.log('Initial RUNPOD response:', initialResponseData);
+         
+        let status = initialResponseData.status;
+        updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'status', status);
+        let id = initialResponseData.id;
+        let statusResponse;
+        let statusResponseData;
+        while (status === 'IN_PROGRESS' || status === 'IN_QUEUE') {
+            await new Promise(resolve => setTimeout(resolve, initialResponseData.delayTime || 5000)); // Wait for the delay time or 5 seconds
+            statusResponse = await fetch(`https://api.runpod.ai/v2/aphuaj3mbhzzbw/status/${id}`, {
+              method: 'POST',
+              headers: headers,
+              body: JSON.stringify(data)
+            });
+            statusResponseData = await statusResponse.json();
+            status = statusResponseData.status;
+             // Save the status response in the database
+             console.log('Status RUNPOD response:', statusResponseData);
+             updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'status', status);
+        }
+
+        if (status === 'error' || (status === 'COMPLETED' && statusResponseData.output.status === 'error')) {
+            throw new Error(statusResponseData.output.message || 'Workflow error');
+        }
+
+        if (status === 'FAILED') {
+            throw new Error(statusResponseData.error || 'Workflow failed');
+        }
+
+        const base64Image = statusResponseData.output.message;
+        console.log(`base64Image`);
+        console.log(base64Image);
+
+        // Add generated image filename to queue.json        
+        return { error: false, filePath: base64Image };
+    } catch (error) {
+        throw new Error(error || 'Workflow failed');
+    }
+}
+
+
   const renameFile = (customFileName: string) => {
     return async ({ file }) => {
       const fileExtension = file.name.split('.').pop();
@@ -434,7 +627,34 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
                             {Object.entries(getWorkflowParams(job.id, job.workflow)).map(([key, value], idx) => (
                               <td key={idx} className="workflow-param-cell">
                                 <div key={key}>
-                                  {typeof value === 'string' && (value.includes('.png') || value.includes('.jpg')) ? (
+                                  {
+                                    key === 'stylemap' ? (
+                                    //make a menu from the evox list to pick the style file
+                                    <Menu trigger={<MenuButton className="imgbtn">{value ? <Image  alt={value} src={value} />  : 'no file'}</MenuButton>}>
+                                      {evoxImagesList.map((vehicle, idx) => (
+                                        <MenuItem
+                                          key={idx}
+                                          onClick={(e) => {
+                                            console.log(job);
+                                            console.log(job.workflow_params);
+                                            const newParams = JSON.parse(job.workflow_params || '{}');
+                                            console.log(newParams);
+                                            const angleString = job.angle; // Replace with your random string
+                                            console.log(angleString); 
+                                            const lastFewDigits = parseInt(angleString.match(/\d+$/)?.[0] || '', 10);
+                                            console.log(lastFewDigits); 
+                                            const parsedInteger = parseInt(lastFewDigits, 10)/10;     
+                                            console.log(parsedInteger);                 
+                                            newParams[key] = vehicle.urls[parsedInteger];
+                                            console.log(newParams);
+                                            updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'workflow_params', newParams);
+                                          }}
+                                        >
+                                          {vehicle.fulltext_search}
+                                        </MenuItem>
+                                      ))}
+                                    </Menu>
+                                  ): typeof value === 'string' && (value.includes('.png') || value.includes('.jpg')) ? (
                                     //display only image from vehicle/job.vifid/[key]/[angle].png folder
                                     <StorageImage alt={value} path={value} />
                                     
@@ -475,7 +695,7 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
                           </td>
               <td>
                 <button onClick={() => removeJob(job.id)}>X</button>
-                <button onClick={() => runJob(job.id)}>RUN</button>
+                <button onClick={() => runJob(job.id,job.workflow)}>{job.status ? job.status : 'RUN'}</button>
               </td>
             </tr>
           );
