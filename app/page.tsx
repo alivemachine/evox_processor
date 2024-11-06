@@ -24,23 +24,59 @@ Amplify.configure(outputs);
 const client = generateClient<Schema>();
 const angleOptions = [
   "spin0", 
+  "spin1",
+  "spin2",
+  "spin3",
+  "spin4",
+  "spin5",
+  "spin6",
+  "spin7",
+  "spin8",
+  "spin9",
+  "spin10",
+  "spin11",
+  "spin12",
+  "spin13",
+  "spin14",
+  "spin15",
+  "spin16",
+  "spin17",
+  "spin18",
+  "spin19",
   "spin20", 
+  "spin30", 
   "spin40", 
+  "spin50", 
   "spin60", 
+  "spin70", 
   "spin80", 
+  "spin90", 
   "spin100", 
+  "spin110", 
   "spin120", 
+  "spin130", 
   "spin140", 
+  "spin150", 
   "spin160", 
+  "spin170", 
   "spin180", 
+  "spin190", 
   "spin200", 
+  "spin210", 
   "spin220", 
+  "spin230", 
   "spin240", 
+  "spin250", 
   "spin260", 
+  "spin270", 
   "spin280", 
+  "spin290", 
   "spin300", 
+  "spin310", 
   "spin320", 
-  "spin340"
+  "spin330", 
+  "spin340",
+  "spin350"
 ];
 export default function App() {
   const [jobs, setJobs] = useState<Array<Schema["Job"]["type"]>>([]);
@@ -111,7 +147,7 @@ export default function App() {
   }
   async function getDatabaseData() {
     let jobsData: Array<Schema["Job"]["type"]> = await listJobs();
-
+    setSelectedJob(jobsData[0]?.vifid || 'all');
     console.log(jobsData);
         const newGeneratedData: Record<string, any[]> = {}; 
         const newColormapsData: Record<string, any[]> = {};
@@ -223,8 +259,32 @@ export default function App() {
         if (key in job) {
             value = job[key as keyof typeof job];
         }
+        var angleWord = '';
+        //change the angleWord in function of digit in job.angle
+      if (job.angle?.includes('spin')) {
+        const angleDigit = parseInt(job.angle.replace('spin', ''));
+        if (angleDigit >= 0 && angleDigit <= 20) {
+          angleWord = 'side door, wheel rims with tires';
+        } else if (angleDigit >= 20 && angleDigit < 60) {
+          angleWord = 'rear 3/4 profile taillight, trunck';
+        } else if (angleDigit >= 70 && angleDigit < 100) {
+          angleWord = 'rear taillight, trunck with emblem, badge, logo in the middle';
+        } else if (angleDigit >= 110 && angleDigit < 150) {
+          angleWord = 'rear 3/4 profile taillight, trunck ';
+        } else if (angleDigit >= 160 && angleDigit < 190) {
+          angleWord = 'side door, wheel rims with tires ';
+        } else if (angleDigit >= 200 && angleDigit < 240) {
+          angleWord = 'front 3/4 profile, headlight, side mirror ';
+        } else if (angleDigit >= 250 && angleDigit < 280) {
+          angleWord = 'front grill with emblem, badge, logo in the middle ';
+        } else if (angleDigit >= 290 && angleDigit < 320) {
+          angleWord = 'front 3/4 profile ';
+        } else if (angleDigit >= 330 && angleDigit <= 360) {
+          angleWord = 'side, headlight, side mirror ';
+        }
+      }
         if (key === "positive_prompt") {
-            value = job.color + " " + job.body + " " + job.trim + " " + value;
+            value = job.color + " " + job.body + " " + job.trim + " " +angleWord+ value;
         }
         //if key exist in job.workflow_params then use its value
         if (job.workflow_params) {
@@ -242,11 +302,11 @@ export default function App() {
           value=`vehicles/${job.vifid}/depthmaps/depth_${padNumber(String(job.angle).replace('spin',''))}.png`;
         }
         if(key === "stylemap"&&value==='') {
-          //value=`vehicles/${job.vifid}/stylemaps/style_${padNumber(String(job.angle).replace('spin',''))}.png`;
+          //value=`vehicles/${job.vifid}/colormaps/style_${padNumber(String(job.angle).replace('spin',''))}.png`;
         }
         if(key === "lora") {
           //choose the file which name includes job.vifid and `diffuserType
-          value=`${lorasData['loras']?.find(lora => lora.path.includes(job.vifid) && lora.path.includes(diffuserType))?.path || ''}`;
+          value=`${lorasData['loras']?.find(lora => lora.path.includes(job.vifid) && lora.path.includes(diffuserType))?.path.replace('loras/','') || ''}`;
         }
         inputNodesObject[key] = value;
     });
@@ -342,8 +402,16 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
         if (node._meta && node._meta.title.startsWith("in--")) {
             const paramKey = node._meta.title.replace("in--", "");
             if (paramKey in workflowParams) {
-                node.inputs[0] = workflowParams[paramKey];
+                const firstKey = Object.keys(node.inputs)[0];
+                node.inputs[firstKey] = workflowParams[paramKey].split('/').pop();            }
+        }
+        // Check if the node's title includes 'Sampler' and update its inputs value
+        if (node._meta && node._meta.title.includes('Sampler')) {
+          Object.keys(node.inputs).forEach(key => {
+            if (key.includes('seed')) {
+              node.inputs[key] = Math.floor(Math.random() * 10000); // Set a random integer
             }
+          });
         }
     });
     // Check if any of the value in workflowParams is an image
@@ -354,31 +422,40 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
     );
 
     const imageArray = await Promise.all(imageKeys.map(async key => {
-      const imagePath = workflowParams[key];
+      const imagePath = workflowParams[key];  
       const base64String = (await convertToBase64(imagePath, 1024)).replace('data:image/png;base64,',''); // Assuming maxSize is 1024
       return {
-          name: key,
+          name: imagePath.split('/').pop().replace('.jpg', '.png').replace('.jpeg', '.png'),
           image: base64String
       };
     }));
-    imageArray.forEach(imageObj => {
-      const newWindow = window.open();
-      if (newWindow) {
-          newWindow.document.write(`<img src="${'data:image/png;base64,'+imageObj.image}" alt="${imageObj.name}" />`);
-      }
+    //change all image extensions in the json from .jpg to .png
+    Object.keys(workflowJson).forEach((key) => {
+      const node = workflowJson[key];
+      const firstKey = Object.keys(node.inputs)[0];            
+                        if (typeof node.inputs[firstKey] === 'string') {              
+                node.inputs[firstKey] = node.inputs[firstKey].replace('.jpg', '.png').replace('.jpeg', '.png');
+            }
   });
+    //uncomment to preview images that are sent to runpod when running a job
+    //imageArray.forEach(imageObj => {
+    //  const newWindow = window.open();
+    //  if (newWindow) {
+    //      newWindow.document.write(`<img src="${'data:image/png;base64,'+imageObj.image}" alt="${imageObj.name}" />`);
+    //  }
+  //});
 
     // create the images object and add it to the data object
     const data = {
         "input": {
           "workflow": workflowJson,
           images: imageArray,
-          file_name: `${job.vifid}/generated/${job.color?.replace(/[^a-zA-Z]/g, '')}_${job.angle?.replace(/[^a-zA-Z]/g, '')}`,    
+          file_name: `${job.vifid}/generated/${job.color?.replace(/[^a-zA-Z]/g, '')}_${job.angle}`,    
         }};
         console.log(data);
 
     try {
-      const initialResponse = await fetch(`https://api.runpod.ai/v2/aphuaj3mbhzzbw/run`, {
+      const initialResponse = await fetch(`https://api.runpod.ai/v2/8w67zxhwn3jsa4/run`, {
         method: 'POST',
         headers: headers,
         body: JSON.stringify(data)
@@ -389,22 +466,30 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
          console.log('Initial RUNPOD response:', initialResponseData);
          
         let status = initialResponseData.status;
-        updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'status', status);
+        let statusMsg = status;
+        if(initialResponseData.retries && status === 'IN_PROGRESS'){
+          statusMsg = 'Retry '+initialResponseData.retries;
+        }
+        updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'status', statusMsg);
         let id = initialResponseData.id;
         let statusResponse;
         let statusResponseData;
         while (status === 'IN_PROGRESS' || status === 'IN_QUEUE') {
             await new Promise(resolve => setTimeout(resolve, initialResponseData.delayTime || 5000)); // Wait for the delay time or 5 seconds
-            statusResponse = await fetch(`https://api.runpod.ai/v2/aphuaj3mbhzzbw/status/${id}`, {
+            statusResponse = await fetch(`https://api.runpod.ai/v2/8w67zxhwn3jsa4/status/${id}`, {
               method: 'POST',
               headers: headers,
               body: JSON.stringify(data)
             });
             statusResponseData = await statusResponse.json();
             status = statusResponseData.status;
+            statusMsg=status;
              // Save the status response in the database
              console.log('Status RUNPOD response:', statusResponseData);
-             updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'status', status);
+             if(statusResponseData.retries && status === 'IN_PROGRESS'){
+              statusMsg = 'Retry '+statusResponseData.retries;
+            }
+             updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'status', statusMsg);
         }
 
         if (status === 'error' || (status === 'COMPLETED' && statusResponseData.output.status === 'error')) {
@@ -416,9 +501,15 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
         }
 
         const base64Image = statusResponseData.output.message;
-        console.log(`base64Image`);
         console.log(base64Image);
+        const regex = /amazonaws\.com\/.*?\.png/;
+        const matchedImage = base64Image.match(regex);
 
+
+        const cleanedImage = matchedImage[0].replace("amazonaws.com/", "");
+        console.log(cleanedImage);
+
+        updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'img', cleanedImage);
         // Add generated image filename to queue.json        
         return { error: false, filePath: base64Image };
     } catch (error) {
@@ -555,7 +646,6 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
              <MenuItem onClick={() => {setUploadPath(`ref-images`)}}>Upload ref images</MenuItem>
              <MenuItem onClick={() => {setUploadPath(`colormaps`)}}>Upload color maps</MenuItem>
              <MenuItem onClick={() => {setUploadPath(`depthmaps`)}}>Upload depth maps</MenuItem>
-             <MenuItem onClick={() => {setUploadPath(`stylemaps`)}}>Upload style maps</MenuItem>
              <MenuItem onClick={() => {setUploadPath(`loras`)}}>Upload LoRa .safetensors</MenuItem>
 
            </Menu>files here</Text>
@@ -579,9 +669,9 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
                     <Menu trigger={<MenuButton>{job.color}</MenuButton>}>
                       <MenuItem onClick={() => createJob(job.vifid, job.color)}>Add {job.color} single</MenuItem>
                       <MenuItem onClick={() => {
-                        createJob(job.vifid, job.color, 'spin14');
-                        createJob(job.vifid, job.color, 'spin26');
-                        createJob(job.vifid, job.color, 'spin30');
+                        createJob(job.vifid, job.color, 'spin140');
+                        createJob(job.vifid, job.color, 'spin260');
+                        createJob(job.vifid, job.color, 'spin300');
                       }}>Add {job.color} 3AC</MenuItem>
                       <MenuItem onClick={() => angleOptions.forEach(angle => createJob(job.vifid, job.color, angle))}>Add {job.color} 360</MenuItem>
                       <Divider />
@@ -695,8 +785,15 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
                           </td>
               <td>
                 <button onClick={() => removeJob(job.id)}>X</button>
-                <button onClick={() => runJob(job.id,job.workflow)}>{job.status ? job.status : 'RUN'}</button>
-              </td>
+                <button onClick={() => runJob(job.id, job.workflow)}>
+                  {job.status && (job.status.includes('QUEUE') || job.status.includes('PROGRESS')) ? (
+                    <>
+                    <Loader size="large" /> {job.status}
+                    </>
+                  ) : (
+                    job.status || 'RUN'
+                  )}
+                </button>              </td>
             </tr>
           );
         })}

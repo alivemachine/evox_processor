@@ -95,3 +95,7 @@ body {
     max-height:40vh;
     overflow:auto;
   }
+  .amplify-button,.amplify-button.amplify-field-group__control.amplify-button {
+    max-width:200px;
+    overflow:hidden;
+  }
