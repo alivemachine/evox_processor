@@ -270,7 +270,7 @@ export default function App() {
         }
         //if key exist in job.workflow_params then use its value
         if (job.workflow_params) {
-            const workflowParams = JSON.parse(job.workflow_params);
+            const workflowParams = JSON.parse(job.workflow_params as string);
             if (workflowParams[key]) {
                 value = workflowParams[key];
             }
