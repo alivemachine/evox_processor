@@ -3,25 +3,7 @@ import { getWorkflowParams } from "../get-workflow-params/resource"
 import { runWorkflow } from "../run-workflow/resource"
 const angleOptions = [
   "spin0", 
-  "spin1",
-  "spin2",
-  "spin3",
-  "spin4",
-  "spin5",
-  "spin6",
-  "spin7",
-  "spin8",
-  "spin9",
   "spin10",
-  "spin11",
-  "spin12",
-  "spin13",
-  "spin14",
-  "spin15",
-  "spin16",
-  "spin17",
-  "spin18",
-  "spin19",
   "spin20", 
   "spin30", 
   "spin40", 
@@ -57,7 +39,6 @@ const angleOptions = [
   "spin340",
   "spin350"
 ];
-
 /*== STEP 1 ===============================================================
 The section below creates a database with the structure {"id#":{"color":{"angle":{}}}}.
 The authorization rule below specifies that any user authenticated via an API key 
