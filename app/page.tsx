@@ -296,7 +296,7 @@ async function listEvoxVehicles() {
             }
         }
         //if key === colormaps or depthmaps or stylemaps then use the latest image from the folder
-        const padNumber = (num) => String(num).padStart(3, '0');
+const padNumber = (num: number | string): string => String(num).padStart(3, '0');
         if (key === "colormap"){
           value=`vehicles/${job.vifid}/colormaps/color_${padNumber(String(job.angle).replace('spin',''))}.png`;
         }
