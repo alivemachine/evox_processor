@@ -71,7 +71,7 @@ export default function App() {
   const [selectedJob, setSelectedJob] = useState('all');
   const [selectedMap, setSelectedMap] = useState('generated');
   const [uploadPath, setUploadPath] = useState('colormaps');
-  const [evoxImagesList, setEvoxImagesList] = useState([]);
+  const [evoxImagesList, setEvoxImagesList] = useState<any[]>([]);
   const [selectedAngle, setSelectedAngle] = useState('spin0');
   const [selectedSetting, setSelectedSetting] = useState(false);
 async function listEvoxVehicles() {
