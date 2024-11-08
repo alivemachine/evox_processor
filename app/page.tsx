@@ -524,7 +524,7 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
         updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'img', cleanedImage);
         //update the image viewer with the new image
         {filteredJobs.length > 0 && filteredJobs.every(job => job.vifid === filteredJobs[0].vifid) && (
-          updateImageViewer(filteredJobs, selectedMap, runCurrentJob)
+          updateImageViewer(filteredJobs, selectedMap, runCurrentJob,selectedAngle)
         )}
         // Add generated image filename to queue.json        
         return { error: false, filePath: base64Image };
