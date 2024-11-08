@@ -528,9 +528,15 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
         )}
         // Add generated image filename to queue.json        
         return { error: false, filePath: base64Image };
-    } catch (error) {
-        throw new Error(error || 'Workflow failed');
-    }
+      } catch (error) {
+        if (error instanceof Error) {
+          throw error; // Re-throw if it's already an Error object
+        } else if (typeof error === 'string') {
+          throw new Error(error);
+        } else {
+          throw new Error('Workflow failed: ' + JSON.stringify(error));
+        }
+      }
 }
 
 
