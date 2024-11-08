@@ -10,7 +10,7 @@ import { Menu, MenuItem, View, MenuButton, Divider,TextField ,TextAreaField,Slid
   Flex,
   Text,
   Image,
-  Loader,
+  Loader,ToggleButton,ToggleButtonGroup,
   Icon } from '@aws-amplify/ui-react';
 import { list,getUrl } from 'aws-amplify/storage';
 import "./../app/app.css";
@@ -18,7 +18,7 @@ import { Amplify } from "aws-amplify";
 import type { Schema } from "@/amplify/data/resource";
 import outputs from "@/amplify_outputs.json";
 import "@aws-amplify/ui-react/styles.css";
-
+import ImageViewer from './ImageViewer';
 Amplify.configure(outputs);
 
 const client = generateClient<Schema>();
@@ -69,27 +69,36 @@ export default function App() {
   const [lorasData, setLorasData] = useState<Record<string, any[]>>({});
   const [workflows, setWorkflows] =  useState<Array<Schema["Workflow"]["type"]>>([]);
   const [selectedJob, setSelectedJob] = useState('all');
+  const [selectedMap, setSelectedMap] = useState('generated');
   const [uploadPath, setUploadPath] = useState('colormaps');
   const [evoxImagesList, setEvoxImagesList] = useState([]);
+  const [selectedAngle, setSelectedAngle] = useState('spin0');
+  const [selectedSetting, setSelectedSetting] = useState(false);
+async function listEvoxVehicles() {
+    const colorCodes = ['SA', 'SE', 'GXD','17U','C4P','C4W'];//
+    let allFilteredData: any[] = [];
 
-  async function listEvoxVehicles() {
-    const response = await fetch('https://api.evoximages.com/api/v1/vehicles?&pid=9&ptid=595&color_code=GXD&api_key=e3LjTFAQEG4MuaDYzZt8kmgqnysC72UX');
-    const result = await response.json();
-  
-    if (result.statusCode === 200) {
-      const filteredData = result.data.filter((vehicle: any) => vehicle.urls && vehicle.urls.length > 0)
-                                      .filter((vehicle: any) => JSON.stringify(vehicle).includes("GXD"))
-                                      .map((vehicle: any) => {
-                                        vehicle.urls = vehicle.urls.filter((url: string) => url.includes("GXD"));
-                                        return vehicle;
-                                      });
+    for (const colorcode of colorCodes) {
+        const response = await fetch(`https://api.evoximages.com/api/v1/vehicles?&pid=9&ptid=595&color_code=${colorcode}&api_key=e3LjTFAQEG4MuaDYzZt8kmgqnysC72UX`);
+        const result = await response.json();
 
-      console.log(filteredData);
-      setEvoxImagesList(filteredData);
-    } else {
-      throw new Error('Failed to fetch vehicles');
+        if (result.statusCode === 200) {
+            const filteredData = result.data.filter((vehicle: any) => vehicle.urls && vehicle.urls.length > 0)
+                                            .filter((vehicle: any) => JSON.stringify(vehicle).includes(colorcode))
+                                            .map((vehicle: any) => {
+                                                vehicle.urls = vehicle.urls.filter((url: string) => url.includes(colorcode));
+                                                return vehicle;
+                                            });
+                                            console.log(filteredData);
+            allFilteredData = allFilteredData.concat(filteredData);
+        } else {
+            throw new Error(`Failed to fetch vehicles for color code ${colorcode}`);
+        }
     }
-  }
+
+    console.log(allFilteredData);
+    setEvoxImagesList(allFilteredData);
+}
 
   async function listWorkflows() {
     try {
@@ -202,14 +211,24 @@ export default function App() {
     if (angle === null) {
       angle = angleOptions[0];
     }
+    var workflow = '';
+    //if the digits in angle don't amount to 0
+    if(parseInt(angle.replace('spin',''))!==0){
+      //then attribute the same workflow as the job which has same vifid and angle spin0
+      const spin0Job = jobs.find((job) => job.vifid === vifid && job.angle === 'spin0');
+      workflow = spin0Job?.workflow ?? '';
+      console.log(workflow);
+    }
     client.models.Job.create({
       id: vifid + "_" + color.replace(/[^a-zA-Z0-9]/g, '') + "_"+angle,
       vifid: vifid,
       body: body,
       trim: trim,
       color: color,
-      angle: angle
+      angle: angle,
+      workflow: workflow,
     });
+    
     if(selectedJob!=='all'||selectedJob!==vifid){
       setSelectedJob(vifid);
     }
@@ -246,28 +265,29 @@ export default function App() {
       if (job.angle?.includes('spin')) {
         const angleDigit = parseInt(job.angle.replace('spin', ''));
         if (angleDigit >= 0 && angleDigit <= 20) {
-          angleWord = 'side door, wheel rims with tires';
+          angleWord = 'side door ';
         } else if (angleDigit >= 20 && angleDigit < 60) {
-          angleWord = 'rear 3/4 profile taillight, trunck';
+          angleWord = 'rear 3/4 profile ';
         } else if (angleDigit >= 70 && angleDigit < 100) {
-          angleWord = 'rear taillight, trunck with emblem, badge, logo in the middle';
+          angleWord = 'rear ';
         } else if (angleDigit >= 110 && angleDigit < 150) {
-          angleWord = 'rear 3/4 profile taillight, trunck ';
+          angleWord = 'rear 3/4 profile ';
         } else if (angleDigit >= 160 && angleDigit < 190) {
-          angleWord = 'side door, wheel rims with tires ';
+          angleWord = 'side door ';
         } else if (angleDigit >= 200 && angleDigit < 240) {
-          angleWord = 'front 3/4 profile, headlight, side mirror ';
+          angleWord = 'front 3/4 profile ';
         } else if (angleDigit >= 250 && angleDigit < 280) {
-          angleWord = 'front grill with emblem, badge, logo in the middle ';
+          angleWord = 'front grille ';
         } else if (angleDigit >= 290 && angleDigit < 320) {
           angleWord = 'front 3/4 profile ';
         } else if (angleDigit >= 330 && angleDigit <= 360) {
-          angleWord = 'side, headlight, side mirror ';
+          angleWord = 'side ';
         }
       }
         if (key === "positive_prompt") {
             value = job.color + " " + job.body + " " + job.trim + " " +angleWord+ value;
         }
+        
         //if key exist in job.workflow_params then use its value
         if (job.workflow_params) {
             const workflowParams = JSON.parse(job.workflow_params as string);
@@ -290,6 +310,9 @@ export default function App() {
           //choose the file which name includes job.vifid and `diffuserType
           value=`${lorasData['loras']?.find(lora => lora.path.includes(job.vifid) && lora.path.includes(diffuserType))?.path.replace('loras/','') || ''}`;
         }
+        if (key === "positive_prompt") {
+          //console.log(value);
+      }
         inputNodesObject[key] = value;
     });
     return inputNodesObject;
@@ -377,7 +400,7 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
     };
     const workflowJson = JSON.parse(typeof workflow.json === 'string' ? workflow.json : '{}');
     const workflowParams = getWorkflowParams(jobid, workflowid);
-
+    console.log(workflowParams);
     // Iterate over the keys of workflowJson and update the nodes
     Object.keys(workflowJson).forEach((key) => {
         const node = workflowJson[key];
@@ -385,7 +408,12 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
             const paramKey = node._meta.title.replace("in--", "");
             if (paramKey in workflowParams) {
                 const firstKey = Object.keys(node.inputs)[0];
-                node.inputs[firstKey] = workflowParams[paramKey].split('/').pop();            }
+                if(typeof workflowParams[paramKey] === 'string' && (workflowParams[paramKey].includes('.png')|| workflowParams[paramKey].includes('.jpg')|| workflowParams[paramKey].includes('.jpeg'))){
+                  node.inputs[firstKey] = workflowParams[paramKey].split('/').pop();    
+                }else{
+                  node.inputs[firstKey] = workflowParams[paramKey];   
+                }
+                        }
         }
         // Check if the node's title includes 'Sampler' and update its inputs value
         if (node._meta && node._meta.title.includes('Sampler')) {
@@ -398,9 +426,11 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
     });
     // Check if any of the value in workflowParams is an image
     const imageKeys = Object.keys(workflowParams).filter(key => 
-      workflowParams[key].endsWith('.png') || 
-      workflowParams[key].endsWith('.jpg') || 
-      workflowParams[key].endsWith('.jpeg')
+      typeof workflowParams[key] === 'string' && (
+        workflowParams[key].endsWith('.png') || 
+        workflowParams[key].endsWith('.jpg') || 
+        workflowParams[key].endsWith('.jpeg')
+      )
     );
 
     const imageArray = await Promise.all(imageKeys.map(async key => {
@@ -450,7 +480,7 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
         let status = initialResponseData.status;
         let statusMsg = status;
         if(initialResponseData.retries && status === 'IN_PROGRESS'){
-          statusMsg = 'Retry '+initialResponseData.retries;
+          statusMsg = 'Retry '+initialResponseData.retries+' '+status;
         }
         updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'status', statusMsg);
         let id = initialResponseData.id;
@@ -492,6 +522,10 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
         console.log(cleanedImage);
 
         updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'img', cleanedImage);
+        //update the image viewer with the new image
+        {filteredJobs.length > 0 && filteredJobs.every(job => job.vifid === filteredJobs[0].vifid) && (
+          updateImageViewer(filteredJobs, selectedMap, runCurrentJob)
+        )}
         // Add generated image filename to queue.json        
         return { error: false, filePath: base64Image };
     } catch (error) {
@@ -537,42 +571,186 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
   };
     const { data: updatedJob, errors } = await client.models.Job.update(job);
 }
+function runCurrentJob(jobid: string) {
+  return async () => {
+    const job = jobs.find((job) => job.id === jobid);
+    if (!job) { throw new Error("Job not found"); }
+    const workflowid = job.workflow;
+    const { error, filePath } = await runJob(jobid, workflowid);
+    if (error) {
+      console.error(filePath);
+    } else {
+      console.log(filePath);
+    }
+  };
+}
 
+// Function to download all the images
+async function downloadAllImages(jobs) {
+  for (const job of jobs) {
+    try {
+      // Remove the leading slash if present
+      const imagePath = job.img.startsWith('/') ? job.img.slice(1) : job.img;
+      
+      // Get the signed URL for the image
+      const getUrlResult  = await getUrl({ path: imagePath }); // Ensure correct parameter is passed
+
+      // Fetch the image as a blob
+      const response = await fetch(getUrlResult.url);
+      const blob = await response.blob();
+
+      // Create a temporary anchor element to trigger the download
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = imagePath.split('/').pop(); // Extract the filename from the path
+      document.body.appendChild(link);
+      link.click();
+      setTimeout(() => {
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href); // Clean up the object URL
+      }, 100);
+    } catch (error) {
+      console.error(`Error downloading image: ${job.img}`, error);
+    }
+  }
+}
+
+
+const updateImageViewer = (filteredJobs, selectedMap, runCurrentJob, angle) => {
+console.log(angle);
+  const sortedImagePaths = filteredJobs
+    .map(job => {
+      let imgPath;
+      const spinValue = job.angle.match(/spin(\d+)/)[1];
+      switch (selectedMap) {
+        case 'colormap':
+          imgPath = `vehicles/${job.vifid}/colormaps/color_${spinValue.padStart(3, '0')}.png`;
+          break;
+        case 'depthmap':
+          imgPath = `vehicles/${job.vifid}/depthmaps/depth_${spinValue.padStart(3, '0')}.png`;
+          break;
+        default:
+          imgPath = job.img;
+      }
+      return { img: imgPath, angle: parseInt(spinValue, 10) };
+    })
+    .sort((a, b) => a.angle - b.angle)
+    .map(job => job.img);
+
+  const handleImageChange = (newAngle) => {
+    setSelectedAngle(prevAngle => {
+      if (prevAngle !== newAngle) {
+        console.log(newAngle);
+        return newAngle;
+      }
+      return prevAngle;
+    });
+  };
+
+  return filteredJobs[0].id && (
+    <ImageViewer
+      imagePaths={sortedImagePaths}
+      onTriggerFunction={() => runCurrentJob(filteredJobs[0].id)}
+      onImageChange={handleImageChange}
+      angle={angle}
+    />
+  );
+};
 const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid === selectedJob);
 
 //The queue table is designed to sort the data in the database by vifid, color and angle and then merge the relevant rows by column.
   return (
 <main>
-  <div id="queue-table">
+  <div>
   <h1>EVOX AI BATCH PROCESSOR</h1>
-  <table>
-    <tbody>
-      <tr>
-        <td>
-          <Menu trigger={<MenuButton>{selectedJob}</MenuButton>}>
+<Menu trigger={
+            <MenuButton size="large">
+              {selectedJob + (jobs.find(job => job.vifid === selectedJob)?.body || jobs.find(job => job.vifid === selectedJob)?.trim ? 
+                " | " + (jobs.find(job => job.vifid === selectedJob)?.body || '') + " " + (jobs.find(job => job.vifid === selectedJob)?.trim || '') : '')}
+            </MenuButton>
+          }>
             <MenuItem onClick={() => setSelectedJob('all')}>All</MenuItem>
             {Array.from(new Set(jobs.map(job => job.vifid))).map(vifid => (
               <MenuItem key={vifid} onClick={() => setSelectedJob(vifid)}>
-                {vifid + (jobs.find(job => job.vifid === vifid)?.body || jobs.find(job => job.vifid === vifid)?.trim ? " | " + (jobs.find(job => job.vifid === vifid)?.body || '') + " " + (jobs.find(job => job.vifid === vifid)?.trim || '') : '')}
-                </MenuItem>
+                {vifid + (jobs.find(job => job.vifid === vifid)?.body || jobs.find(job => job.vifid === vifid)?.trim ? 
+                  " | " + (jobs.find(job => job.vifid === vifid)?.body || '') + " " + (jobs.find(job => job.vifid === vifid)?.trim || '') : '')}
+              </MenuItem>
             ))}
             <Divider />
             <MenuItem onClick={() => createJob()}>+ new</MenuItem>
           </Menu>
+          <Menu trigger={<MenuButton>{selectedMap}</MenuButton>}>
+        <MenuItem onClick={() => setSelectedMap('generated')}>Generated</MenuItem>
+        <MenuItem onClick={() => setSelectedMap('colormap')}>Colormap</MenuItem>
+        <MenuItem onClick={() => setSelectedMap('depthmap')}>Depthmap</MenuItem>
+      </Menu>
+  <div className='flipbook'>
+      {filteredJobs.length > 0 && filteredJobs.every(job => job.vifid === filteredJobs[0].vifid) && (
+       updateImageViewer(filteredJobs, selectedMap, runCurrentJob,selectedAngle)
+      )}
+    </div>
+  <table id="queue-options">
+    <tbody>
+      <tr>
+        <td>
+          
+        </td>
+        <td>
+
+        </td>
+        <td>
+        <Button onClick={() => setSelectedAngle('all')}>All angles</Button>
+        </td>
+        <td>
+        <ToggleButton
+          onClick={() => setSelectedSetting(selectedSetting === true ? false : true)}
+        >
+          Advanced Mode
+        </ToggleButton>
+        </td>
+        <td>
+          <Button onClick={() => downloadAllImages(filteredJobs)}>Download All Images</Button>
+        </td>
+        <td>
+        <Menu trigger={<MenuButton variation="primary">
+                      {'Choose a workflow'}</MenuButton>}>
+                  {workflows
+                    .filter(workflow => workflow.visibility === 'released')
+                    .map((workflow, idx) => (
+
+                      <MenuItem key={idx} onClick={() => {
+                        //update all the filteredJobs
+                        filteredJobs.forEach(job => {
+                          updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'workflow', workflow.id)
+                        });
+                        }}>
+                        <div>
+                          <div>{workflow.name}</div>
+                          <Text fontSize="xs" variation="primary" fontStyle='italic'>{workflow.description}</Text>
+                        </div>
+                      </MenuItem>
+                    ))}
+                </Menu>
         </td>
       </tr>
     </tbody>
   </table>
-   <table>
+
+
+
+
+
+
+   <table id="queue-table">
     <thead>
       <tr>
-        <th></th>
-        <th>Dataset</th>
-        <th>Color</th>
+        {selectedAngle === 'all' && selectedSetting === true && <th></th>}
+        {selectedAngle === 'all' && selectedSetting === true && <th>Dataset</th>}
+        {selectedAngle === 'all' && <th>Color</th>}
         <th>Angle</th>
-        <th>Image</th>
+        {selectedSetting === true && <th>Image</th>}
         <th>Workflow</th>
-        <th>Workflow Params</th>
+        {selectedSetting === true && <th>Workflow Params</th>}
         <th>Actions</th>
       </tr>
     </thead>
@@ -598,56 +776,57 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
           const colorRowSpan = array.filter((j) => j.vifid === job.vifid && j.color === job.color).length;
     
           return (
-            <tr key={index}>
+            <tr key={index} style={{ display: selectedAngle === 'all' || job.angle === selectedAngle ? 'table-row' : 'none' }}>
               {isFirstRowForVifid && (
                 <>
-                  <td rowSpan={rowSpan}>{job.vifid} {job.body} {job.trim}</td>
-                  <td rowSpan={rowSpan}>
+                  <td style={{ display: selectedAngle === 'all' && selectedSetting ===true ?  'table-cell' : 'none' }} rowSpan={rowSpan}>{job.vifid} {job.body} {job.trim}</td>
+                  <td style={{ display: selectedAngle === 'all' && selectedSetting ===true ? 'table-cell' : 'none' }} rowSpan={rowSpan}>
                  
-      <FileUploader
-      acceptedFileTypes={uploadPath === 'loras' ? ['.safetensors'] : ['image/*']}
-      path={uploadPath === 'loras' ? `loras/` : `vehicles/${job.vifid}/${uploadPath}/`}
+                    <FileUploader
+                    acceptedFileTypes={uploadPath === 'loras' ? ['.safetensors'] : ['image/*']}
+                    path={uploadPath === 'loras' ? `loras/` : `vehicles/${job.vifid}/${uploadPath}/`}
 
-      maxFileCount={100}
+                    maxFileCount={100}
 
-      //processFile={renameFile({job.vifid}+"_"+{job.color}+"_"+{job.angle})}
-      components={{
-        Container({ children }) {
-          return <Card variation="elevated">{children}</Card>;
-        },
-        DropZone({ children, displayText, inDropZone, ...rest }) {
-          return (
-            <Flex
-              alignItems="center"
-              direction="column"
-              padding="medium"
-              backgroundColor={inDropZone ? 'primary.10' : ''}
-              {...rest}
-            >
-              <Text>Drop <Menu trigger={<MenuButton>{uploadPath}</MenuButton>}>
-             <MenuItem onClick={() => {setUploadPath(`ref-images`)}}>Upload ref images</MenuItem>
-             <MenuItem onClick={() => {setUploadPath(`colormaps`)}}>Upload color maps</MenuItem>
-             <MenuItem onClick={() => {setUploadPath(`depthmaps`)}}>Upload depth maps</MenuItem>
-             <MenuItem onClick={() => {setUploadPath(`loras`)}}>Upload LoRa .safetensors</MenuItem>
+                    //processFile={renameFile({job.vifid}+"_"+{job.color}+"_"+{job.angle})}
+                    components={{
+                      Container({ children }) {
+                        return <Card variation="elevated">{children}</Card>;
+                      },
+                      DropZone({ children, displayText, inDropZone, ...rest }) {
+                        return (
+                          <Flex
+                            alignItems="center"
+                            direction="column"
+                            padding="medium"
+                            backgroundColor={inDropZone ? 'primary.10' : ''}
+                            {...rest}
+                          >
+                            <Text>Drop <Menu trigger={<MenuButton>{uploadPath}</MenuButton>}>
+                          <MenuItem onClick={() => {setUploadPath(`ref-images`)}}>Upload ref images</MenuItem>
+                          <MenuItem onClick={() => {setUploadPath(`colormaps`)}}>Upload color maps</MenuItem>
+                          <MenuItem onClick={() => {setUploadPath(`depthmaps`)}}>Upload depth maps</MenuItem>
+                          <MenuItem onClick={() => {setUploadPath(`loras`)}}>Upload LoRa .safetensors</MenuItem>
 
-           </Menu>files here</Text>
-              <Divider size="small" label="or" maxWidth="10rem" />
-              {children}
-            </Flex>
-          );
-        },
-        FilePicker({ onClick }) {
-          return (
-            <button onClick={onClick}>Upload</button>
-             
-          );
-        }}}/></td>
+                        </Menu>files here</Text>
+                            <Divider size="small" label="or" maxWidth="10rem" />
+                            {children}
+                          </Flex>
+                        );
+                      },
+                      FilePicker({ onClick }) {
+                        return (
+                          <button onClick={onClick}>Upload</button>
+                          
+                        );
+                      }}}/>
+                    </td>
                 </>
               )}
               
               {isFirstRowForColor && (
                 <>
-                  <td rowSpan={colorRowSpan}>
+                  <td style={{ display: selectedAngle != 'all' ? 'none' : 'table-cell' }} rowSpan={colorRowSpan}>
                     <Menu trigger={<MenuButton>{job.color}</MenuButton>}>
                       <MenuItem onClick={() => createJob(job.vifid, job.color)}>Add {job.color} single</MenuItem>
                       <MenuItem onClick={() => {
@@ -663,38 +842,56 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
                   </td>
                 </>
               )}
-    
-              <td>{job.angle}</td>
               <td>
-                {job.img ? (
-                  <Menu trigger={<MenuButton className="imgbtn"><StorageImage alt={job.img} path={job.img} /></MenuButton>}>
-                    {generatedData[job.vifid]?.map((item, idx) => (
-                      <MenuItem key={idx} onClick={() => updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'img', item.path)}>
-                        {item.path}
-                      </MenuItem>
-                    ))}
-                  </Menu>
-                ) : (
-                  <Menu>
-                    {generatedData[job.vifid]?.map((item, idx) => (
-                      <MenuItem key={idx} onClick={() => updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'img', item.path)}>
-                        {item.path}
-                      </MenuItem>
-                    ))}
-                  </Menu>
+              <Button onClick={() => {
+                setSelectedAngle(job.angle)
+                {filteredJobs.length > 0 && filteredJobs.every(job => job.vifid === filteredJobs[0].vifid) && (
+                  updateImageViewer(filteredJobs, selectedMap, runCurrentJob, selectedAngle)
                 )}
+                }}>{job.angle}</Button>
+              
               </td>
+              {selectedSetting === true ? (
+                job.img ? (
+                  <td>
+                    <Menu trigger={<MenuButton className="imgbtn">
+                      <StorageImage alt={job.img} path={job.img} />
+                    </MenuButton>}>
+                      {generatedData[job.vifid]?.filter(item => item.path.includes('_' + job.angle + '_')).map((item, idx) => (
+                        <MenuItem key={idx} onClick={() => updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'img', item.path)}>
+                          {item.path.split('/').pop().replace(/\.[^/.]+$/, '').split('_').pop()}
+                        </MenuItem>
+                      ))}
+                    </Menu>
+                  </td>
+                ) : (
+                  <td>
+                    <Menu>
+                      {generatedData[job.vifid]?.map((item, idx) => (
+                        <MenuItem key={idx} onClick={() => updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'img', item.path)}>
+                          {item.path}
+                        </MenuItem>
+                      ))}
+                    </Menu>
+                  </td>
+                )
+              ) : null}
               <td>
-                <Menu trigger={<MenuButton>{workflows.find(w => w.id === job.workflow)?.name || 'Choose a workflow'}</MenuButton>}>
+                <Menu trigger={<MenuButton variation="primary">
+                  {workflows.find(w => w.id === job.workflow)?.name || 'Choose a workflow'}</MenuButton>}>
                   {workflows
                     .filter(workflow => workflow.visibility === 'released')
                     .map((workflow, idx) => (
-                      <MenuItem key={idx} onClick={() => {updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'workflow', workflow.id)}}>
-                        {workflow.name}
+                      <MenuItem key={idx} onClick={() => { updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'workflow', workflow.id) }}>
+                        <div>
+                          <div>{workflow.name}</div>
+                          <Text fontSize="xs" variation="primary" fontStyle='italic'>{workflow.description}</Text>
+                        </div>
                       </MenuItem>
                     ))}
                 </Menu>
               </td>
+              {selectedSetting === true ? (
                           <td className="workflow-params-cell">
                             {Object.entries(getWorkflowParams(job.id, job.workflow)).map(([key, value], idx) => (
                               <td key={idx} className="workflow-param-cell">
@@ -702,27 +899,29 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
                                   {
                                     key === 'stylemap' ? (
                                     //make a menu from the evox list to pick the style file
-                                    <Menu trigger={<MenuButton className="imgbtn">{value ? <Image  alt={value} src={value} />  : 'no file'}</MenuButton>}>
+                                      <Menu trigger={<MenuButton className="imgbtn">{value ? <Image alt={value} src={value} /> : 'no file'}</MenuButton>}>
                                       {evoxImagesList.map((vehicle, idx) => (
                                         <MenuItem
                                           key={idx}
                                           onClick={(e) => {
-                                            console.log(job);
-                                            console.log(job.workflow_params);
-                                            const newParams = JSON.parse(job.workflow_params || '{}');
-                                            console.log(newParams);
-                                            const angleString = job.angle; // Replace with your random string
-                                            console.log(angleString); 
-                                            const lastFewDigits = parseInt(angleString.match(/\d+$/)?.[0] || '', 10);
-                                            console.log(lastFewDigits); 
-                                            const parsedInteger = parseInt(lastFewDigits, 10)/10;     
-                                            console.log(parsedInteger);                 
-                                            newParams[key] = vehicle.urls[parsedInteger];
-                                            console.log(newParams);
-                                            updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'workflow_params', newParams);
+                                            filteredJobs.forEach((job) => {
+                                              console.log(job);
+                                              console.log(job.workflow_params);
+                                              const newParams = JSON.parse(job.workflow_params || '{}');
+                                              console.log(newParams);
+                                              const angleString = job.angle; // Replace with your random string
+                                              console.log(angleString);
+                                              const lastFewDigits = parseInt(angleString.match(/\d+$/)?.[0] || '', 10);
+                                              console.log(lastFewDigits);
+                                              const parsedInteger = parseInt(lastFewDigits, 10) / 10;
+                                              console.log(parsedInteger);
+                                              newParams[key] = vehicle.urls[parsedInteger];
+                                              console.log(newParams);
+                                              updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'workflow_params', newParams);
+                                            });
                                           }}
                                         >
-                                          {vehicle.fulltext_search}
+                                          {vehicle.body} {vehicle.trim}
                                         </MenuItem>
                                       ))}
                                     </Menu>
@@ -765,9 +964,27 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
                               </td>
                             ))}
                           </td>
+        ) : null}
               <td>
-                <button onClick={() => removeJob(job.id)}>X</button>
-                <button onClick={() => runJob(job.id, job.workflow)}>
+                <Button
+                  variation="primary"
+                  colorTheme={
+                    job.status === 'IN_PROGRESS' || job.status === 'IN_QUEUE' ? 'info' :
+                    job.status === 'COMPLETED' ? 'success' :
+                    job.status === 'FAILED' || job.status === 'CANCELLED' ? 'error' :'default'
+                  }                  
+                  onClick={() => removeJob(job.id)}
+                >
+                  X
+                </Button>                
+                <Button 
+                  variation="primary"
+                  colorTheme={
+                    job.status === 'IN_PROGRESS' || job.status === 'IN_QUEUE' ? 'info' :
+                    job.status === 'COMPLETED' ? 'success' :
+                    job.status === 'FAILED' || job.status === 'CANCELLED' ? 'error' :'default'
+                  } 
+                 onClick={() => runJob(job.id, job.workflow)}>
                   {job.status && (job.status.includes('QUEUE') || job.status.includes('PROGRESS')) ? (
                     <>
                     <Loader size="large" /> {job.status}
@@ -775,7 +992,7 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
                   ) : (
                     job.status || 'RUN'
                   )}
-                </button>              </td>
+                </Button>              </td>
             </tr>
           );
         })}
