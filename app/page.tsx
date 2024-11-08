@@ -539,25 +539,6 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
       }
 }
 
-
-  const renameFile = (customFileName: string) => {
-    return async ({ file }) => {
-      const fileExtension = file.name.split('.').pop();
-      
-      // Use the custom filename passed as argument
-      return file
-        .arrayBuffer()
-        .then((filebuffer) => window.crypto.subtle.digest('SHA-1', filebuffer))
-        .then((hashBuffer) => {
-          const hashArray = Array.from(new Uint8Array(hashBuffer));
-          const hashHex = hashArray
-            .map((a) => a.toString(16).padStart(2, '0'))
-            .join('');
-          // Use the custom filename instead of the hash
-          return { file, key: `${customFileName}.${fileExtension}` };
-        });
-    };
-  };
   async function updateJob(vifid: string, color: string,angle: string,property: string, value: any) {
     const id = vifid + "_"+color.replace(/[^a-zA-Z0-9]/g, '')+"_"+angle;
    
