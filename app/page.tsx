@@ -18,7 +18,7 @@ import { Amplify } from "aws-amplify";
 import type { Schema } from "@/amplify/data/resource";
 import outputs from "@/amplify_outputs.json";
 import "@aws-amplify/ui-react/styles.css";
-import ImageViewer from './ImageViewer';
+import ImageViewer from './imageViewer';
 Amplify.configure(outputs);
 
 const client = generateClient<Schema>();
@@ -487,7 +487,7 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
         let statusResponse;
         let statusResponseData;
         while (status === 'IN_PROGRESS' || status === 'IN_QUEUE') {
-            await new Promise(resolve => setTimeout(resolve, initialResponseData.delayTime || 5000)); // Wait for the delay time or 5 seconds
+            await new Promise(resolve => setTimeout(resolve, initialResponseData.delayTime || 10000)); // Wait for the delay time or 5 seconds
             statusResponse = await fetch(`https://api.runpod.ai/v2/8w67zxhwn3jsa4/status/${id}`, {
               method: 'POST',
               headers: headers,
