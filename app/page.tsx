@@ -79,7 +79,7 @@ async function listEvoxVehicles() {
     let allFilteredData: any[] = [];
 
     for (const colorcode of colorCodes) {
-        const response = await fetch(`https://api.evoximages.com/api/v1/vehicles?&pid=9&ptid=595&color_code=${colorcode}&api_key=e3LjTFAQEG4MuaDYzZt8kmgqnysC72UX`);
+        const response = await fetch(`https://api.evoximages.com/api/v1/vehicles?&pid=9&ptid=597&color_code=${colorcode}&api_key=e3LjTFAQEG4MuaDYzZt8kmgqnysC72UX`);
         const result = await response.json();
 
         if (result.statusCode === 200) {
@@ -308,7 +308,7 @@ const padNumber = (num: number | string): string => String(num).padStart(3, '0')
         }
         if(key === "lora") {
           //choose the file which name includes job.vifid and `diffuserType
-          value=`${lorasData['loras']?.find(lora => lora.path.includes(job.vifid) && lora.path.includes(diffuserType))?.path.replace('loras/','') || ''}`;
+          //value=`${lorasData['loras']?.find(lora => lora.path.includes(job.vifid) && lora.path.includes(diffuserType))?.path.replace('loras/','') || ''}`;
         }
         if (key === "positive_prompt") {
           //console.log(value);
@@ -388,110 +388,152 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
       });
   }
 }
-  async function runJob(jobid: string, workflowid: string) {
-    const workflow = workflows.find((workflow) => workflow.id === workflowid);
-    const job = jobs.find((job) => job.id === jobid);
-    if (!workflow) { alert(`no workflow`); return {}; }
-    if (!job) { throw new Error("Job not found"); }
-
-    const headers = {
-      'Authorization': 'Bearer 3SNAT5RZD91RWASMYJ1CONECPKKHZQAGCLOARIGJ',
+async function runJob(jobid: string, workflowid: string) {
+  const workflow = workflows.find((workflow) => workflow.id === workflowid);
+  const job = jobs.find((job) => job.id === jobid);
+  if (!workflow) { alert(`no workflow`); return {}; }
+  if (!job) { throw new Error("Job not found"); }
+  const headers = {
+      'Authorization': 'Bearer DCC5ZMJVF6Z83OW8Q5889LZWRWQ4EICI295SZF2K',
       'Content-Type': 'application/json'
-    };
-    const workflowJson = JSON.parse(typeof workflow.json === 'string' ? workflow.json : '{}');
-    const workflowParams = getWorkflowParams(jobid, workflowid);
-    console.log(workflowParams);
-    // Iterate over the keys of workflowJson and update the nodes
-    Object.keys(workflowJson).forEach((key) => {
-        const node = workflowJson[key];
-        if (node._meta && node._meta.title.startsWith("in--")) {
-            const paramKey = node._meta.title.replace("in--", "");
-            if (paramKey in workflowParams) {
-                const firstKey = Object.keys(node.inputs)[0];
-                if(typeof workflowParams[paramKey] === 'string' && (workflowParams[paramKey].includes('.png')|| workflowParams[paramKey].includes('.jpg')|| workflowParams[paramKey].includes('.jpeg'))){
-                  node.inputs[firstKey] = workflowParams[paramKey].split('/').pop();    
-                }else{
-                  node.inputs[firstKey] = workflowParams[paramKey];   
-                }
-                        }
-        }
-        // Check if the node's title includes 'Sampler' and update its inputs value
-        if (node._meta && node._meta.title.includes('Sampler')) {
-          Object.keys(node.inputs).forEach(key => {
-            if (key.includes('seed')) {
-              node.inputs[key] = Math.floor(Math.random() * 10000); // Set a random integer
-            }
-          });
-        }
-    });
-    // Check if any of the value in workflowParams is an image
-    const imageKeys = Object.keys(workflowParams).filter(key => 
-      typeof workflowParams[key] === 'string' && (
-        workflowParams[key].endsWith('.png') || 
-        workflowParams[key].endsWith('.jpg') || 
-        workflowParams[key].endsWith('.jpeg')
-      )
-    );
-
-    const imageArray = await Promise.all(imageKeys.map(async key => {
-      const imagePath = workflowParams[key];  
-      const base64String = (await convertToBase64(imagePath, 1024)).replace('data:image/png;base64,',''); // Assuming maxSize is 1024
-      return {
-          name: imagePath.split('/').pop().replace('.jpg', '.png').replace('.jpeg', '.png'),
-          image: base64String
-      };
-    }));
-    //change all image extensions in the json from .jpg to .png
-    Object.keys(workflowJson).forEach((key) => {
-      const node = workflowJson[key];
-      const firstKey = Object.keys(node.inputs)[0];            
-                        if (typeof node.inputs[firstKey] === 'string') {              
-                node.inputs[firstKey] = node.inputs[firstKey].replace('.jpg', '.png').replace('.jpeg', '.png');
-            }
-  });
-    //uncomment to preview images that are sent to runpod when running a job
-    //imageArray.forEach(imageObj => {
-    //  const newWindow = window.open();
-    //  if (newWindow) {
-    //      newWindow.document.write(`<img src="${'data:image/png;base64,'+imageObj.image}" alt="${imageObj.name}" />`);
-    //  }
-  //});
-
-    // create the images object and add it to the data object
-    const data = {
-        "input": {
-          "workflow": workflowJson,
-          images: imageArray,
-          file_name: `${job.vifid}/generated/${job.color?.replace(/[^a-zA-Z]/g, '')}_${job.angle}`,    
-        }};
-        console.log(data);
-
-    try {
-      const initialResponse = await fetch(`https://api.runpod.ai/v2/8w67zxhwn3jsa4/run`, {
-        method: 'POST',
-        headers: headers,
-        body: JSON.stringify(data)
-      });
-        
-      let initialResponseData = await initialResponse.json();
-         // Save the status response in the database
-         console.log('Initial RUNPOD response:', initialResponseData);
-         
-        let status = initialResponseData.status;
-        let statusMsg = status;
-        if(initialResponseData.retries && status === 'IN_PROGRESS'){
-          statusMsg = 'Retry '+initialResponseData.retries+' '+status;
-        }
-        updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'status', statusMsg);
-        let id = initialResponseData.id;
+  };
+  var bodyData;
+  let parsedStatus;
+  try {
+      parsedStatus = JSON.parse(job.status);
+  } catch (e) {
+      parsedStatus = { status: 'FAILED',id:'' };
+  }
+  let id;
         let statusResponse;
         let statusResponseData;
+        let status ;
+        let statusMsg ;
+        let delayTime = 10000;
+  if (parsedStatus.status === 'COMPLETED' || parsedStatus.status === 'FAILED' || parsedStatus.status === 'CANCELLED') {
+    try {
+      const workflowJson = JSON.parse(typeof workflow.json === 'string' ? workflow.json : '{}');
+      const workflowParams = getWorkflowParams(jobid, workflowid);
+      console.log(workflowParams);
+      // Iterate over the keys of workflowJson and update the nodes
+      Object.keys(workflowJson).forEach((key) => {
+          const node = workflowJson[key];
+          if (node._meta && node._meta.title.startsWith("in--")) {
+              const paramKey = node._meta.title.replace("in--", "");
+              if (paramKey in workflowParams) {
+                  const firstKey = Object.keys(node.inputs)[0];
+                  if(typeof workflowParams[paramKey] === 'string' && (workflowParams[paramKey].includes('.png')|| workflowParams[paramKey].includes('.jpg')|| workflowParams[paramKey].includes('.jpeg'))){
+                    node.inputs[firstKey] = workflowParams[paramKey].split('/').pop();    
+                  }else{
+                    node.inputs[firstKey] = workflowParams[paramKey];   
+                  }
+                          }
+          }
+          // Check if the node's title includes 'Sampler' and update its inputs value
+          if (node._meta && node._meta.title.includes('Sampler')) {
+            Object.keys(node.inputs).forEach(key => {
+              if (key.includes('seed')) {
+                node.inputs[key] = Math.floor(Math.random() * 10000); // Set a random integer
+              }
+            });
+          }
+      });
+      // Check if any of the value in workflowParams is an image
+      const imageKeys = Object.keys(workflowParams).filter(key => 
+        typeof workflowParams[key] === 'string' && (
+          workflowParams[key].endsWith('.png') || 
+          workflowParams[key].endsWith('.jpg') || 
+          workflowParams[key].endsWith('.jpeg')
+        )
+      );
+
+      const imageArray = await Promise.all(imageKeys.map(async key => {
+        const imagePath = workflowParams[key];  
+        const base64String = (await convertToBase64(imagePath, 2048)).replace('data:image/png;base64,',''); // Assuming maxSize is 1024
+        return {
+            name: imagePath.split('/').pop().replace('.jpg', '.png').replace('.jpeg', '.png'),
+            image: base64String
+        };
+        }));
+        //change all image extensions in the json from .jpg to .png
+        Object.keys(workflowJson).forEach((key) => {
+          const node = workflowJson[key];
+          const firstKey = Object.keys(node.inputs)[0];            
+                          if (typeof node.inputs[firstKey] === 'string') {              
+                  node.inputs[firstKey] = node.inputs[firstKey].replace('.jpg', '.png').replace('.jpeg', '.png');
+              }
+        });
+        //uncomment to preview images that are sent to runpod when running a job
+        //imageArray.forEach(imageObj => {
+        //  const newWindow = window.open();
+        //  if (newWindow) {
+        //      newWindow.document.write(`<img src="${'data:image/png;base64,'+imageObj.image}" alt="${imageObj.name}" />`);
+        //  }
+        //});
+
+        // create the images object and add it to the data object
+        bodyData = {
+          "input": {
+            "workflow": workflowJson,
+            images: imageArray,
+            file_name: `${job.vifid}/generated/${job.color?.replace(/[^a-zA-Z]/g, '')}_${job.angle}`,    
+          }};
+          console.log(bodyData);
+    
+
+      
+
+        const initialResponse = await fetch(`https://api.runpod.ai/v2/8w67zxhwn3jsa4/run`, {
+          method: 'POST',
+          headers: headers,
+          body: JSON.stringify(bodyData)
+        });
+          
+        let initialResponseData = await initialResponse.json();
+          // Save the status response in the database
+          console.log('Initial RUNPOD response:', initialResponseData);
+          
+          status = initialResponseData.status;
+          statusMsg = status;
+          if(initialResponseData.retries && status === 'IN_PROGRESS'){
+            statusMsg = 'Retry '+initialResponseData.retries+' '+status;
+          }
+          updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'status', initialResponseData);
+          id = initialResponseData.id;
+      } catch (error) {
+        if (error instanceof Error) {
+          throw error; // Re-throw if it's already an Error object
+        } else if (typeof error === 'string') {
+          throw new Error(error);
+        } else {
+          throw new Error('Workflow failed: ' + JSON.stringify(error));
+        }
+      }
+    }else{
+        //use status from job.status if valid
+        if (job.status && job.status.trim() !== "") {
+          try {
+            const parsedStatus = JSON.parse(job.status);
+            status = parsedStatus.status;
+            id = parsedStatus.id;
+          } catch (e) {
+              status = 'FAILED';
+              updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'status', JSON.stringify({ "status": "FAILED" }));
+          }
+        }else{
+          status = 'FAILED';
+          updateJob(job.vifid, job.color ?? '', job.angle ?? '','status', JSON.stringify({ "status": "FAILED"}));
+        }
+        
+      }
+      
+        
         while (status === 'IN_PROGRESS' || status === 'IN_QUEUE') {
-            await new Promise(resolve => setTimeout(resolve, initialResponseData.delayTime || 10000)); // Wait for the delay time or 5 seconds
+            await new Promise(resolve => setTimeout(resolve, delayTime)); // Wait for the delay time or 5 seconds
             statusResponse = await fetch(`https://api.runpod.ai/v2/8w67zxhwn3jsa4/status/${id}`, {
               method: 'POST',
               headers: headers,
-              body: JSON.stringify(data)
+              body: bodyData ? JSON.stringify(bodyData) : null
             });
             statusResponseData = await statusResponse.json();
             status = statusResponseData.status;
@@ -501,7 +543,7 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
              if(statusResponseData.retries && status === 'IN_PROGRESS'){
               statusMsg = 'Retry '+statusResponseData.retries;
             }
-             updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'status', statusMsg);
+             updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'status', statusResponseData);
         }
 
         if (status === 'error' || (status === 'COMPLETED' && statusResponseData.output.status === 'error')) {
@@ -509,7 +551,11 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
         }
 
         if (status === 'FAILED') {
+          if( statusResponseData.error){
             throw new Error(statusResponseData.error || 'Workflow failed');
+          }else{
+            throw new Error('Workflow failed: ' + JSON.stringify(statusResponseData));
+          }
         }
 
         const base64Image = statusResponseData.output.message;
@@ -528,15 +574,7 @@ async function convertToBase64(imagePath: string, maxSize?: number): Promise<str
         )}
         // Add generated image filename to queue.json        
         return { error: false, filePath: base64Image };
-      } catch (error) {
-        if (error instanceof Error) {
-          throw error; // Re-throw if it's already an Error object
-        } else if (typeof error === 'string') {
-          throw new Error(error);
-        } else {
-          throw new Error('Workflow failed: ' + JSON.stringify(error));
-        }
-      }
+      
 }
 
   async function updateJob(vifid: string, color: string,angle: string,property: string, value: any) {
@@ -918,12 +956,25 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
                                     
                                   ) : key === 'lora' ? (
                                     //make a menu from the lorasData to pick the lora file
-                                    <Menu trigger={<MenuButton>{value ? value : 'no lora'}</MenuButton>}>                                      
-                                    {Object.values(lorasData).flat().map((lora, idx) => (
-                                        <MenuItem key={idx}>
-                                          {lora.path}
-                                        </MenuItem>
-                                      ))}
+                                    <Menu trigger={<MenuButton>{value ? value : 'no lora'}</MenuButton>}>
+                                      {Object.values(lorasData)
+                                        .flat()
+                                        .filter((lora) => lora.path.includes(job.vifid))
+                                        .map((lora, idx) => (
+                                          <MenuItem 
+                                          key={idx}
+                                          onClick={() => {
+                                            
+                                            filteredJobs.forEach((job) => {
+                                              const newParams = JSON.parse(job.workflow_params || '{}');
+                                              newParams[key] = lora.path.replace('loras/', '');
+                                              updateJob(job.vifid, job.color ?? '', job.angle ?? '', 'workflow_params', newParams);
+                                            });
+                                          }}
+                                          >
+                                            {lora.path.replace('loras/', '')}
+                                          </MenuItem>
+                                        ))}
                                     </Menu>
                                   ) : key.includes('prompt') ? (
                                     <TextAreaField
@@ -953,33 +1004,48 @@ const filteredJobs = selectedJob === 'all' ? jobs : jobs.filter(job => job.vifid
                           </td>
         ) : null}
               <td>
-                <Button
-                  variation="primary"
-                  colorTheme={
-                    job.status === 'IN_PROGRESS' || job.status === 'IN_QUEUE' ? 'info' :
-                    job.status === 'COMPLETED' ? 'success' :
-                    job.status === 'FAILED' || job.status === 'CANCELLED' ? 'error' :'default'
-                  }                  
-                  onClick={() => removeJob(job.id)}
-                >
-                  X
-                </Button>                
-                <Button 
-                  variation="primary"
-                  colorTheme={
-                    job.status === 'IN_PROGRESS' || job.status === 'IN_QUEUE' ? 'info' :
-                    job.status === 'COMPLETED' ? 'success' :
-                    job.status === 'FAILED' || job.status === 'CANCELLED' ? 'error' :'default'
-                  } 
-                 onClick={() => runJob(job.id, job.workflow)}>
-                  {job.status && (job.status.includes('QUEUE') || job.status.includes('PROGRESS')) ? (
-                    <>
-                    <Loader size="large" /> {job.status}
-                    </>
-                  ) : (
-                    job.status || 'RUN'
-                  )}
-                </Button>              </td>
+                  <Button
+                      variation="primary"
+                      colorTheme={() => {
+                          let parsedStatus;
+                          try {
+                              parsedStatus = JSON.parse(job.status);
+                          } catch (e) {
+                              parsedStatus = { status: 'FAILED' };
+                          }
+                          return parsedStatus.status === 'IN_PROGRESS' || parsedStatus.status === 'IN_QUEUE' ? 'info' :
+                                 parsedStatus.status === 'COMPLETED' ? 'success' :
+                                 parsedStatus.status === 'FAILED' || parsedStatus.status === 'CANCELLED' ? 'error' : 'default';
+                      }}
+                      onClick={() => removeJob(job.id)}
+                  >
+                      X
+                  </Button>
+                  <Button
+                      variation="primary"
+                      colorTheme={() => {
+                          let parsedStatus;
+                          try {
+                              parsedStatus = JSON.parse(job.status);
+                          } catch (e) {
+                              parsedStatus = { status: 'FAILED'};
+                          }
+                          return parsedStatus.status === 'IN_PROGRESS' || parsedStatus.status === 'IN_QUEUE' ? 'info' :
+                                 parsedStatus.status === 'COMPLETED' ? 'success' :
+                                 parsedStatus.status === 'FAILED' || parsedStatus.status === 'CANCELLED' ? 'error' : 'default';
+                      }}
+                      onClick={() => runJob(job.id, job.workflow)}
+                  >
+                      {(() => {
+                        if (job && job.status) {
+                          
+                          return job.status; // Convert the object to a string before rendering
+                        }else{
+                          return 
+                        }
+                      })()}
+                  </Button>
+              </td>
             </tr>
           );
         })}

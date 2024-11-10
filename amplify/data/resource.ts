@@ -52,7 +52,7 @@ const schema = a.schema({
       trim: a.string(),
       color: a.string(),
       angle: a.enum(angleOptions),
-      status: a.string(),
+      status: a.json(),
       img: a.string(),
       workflow: a.string(),
       workflow_params: a.json(),
